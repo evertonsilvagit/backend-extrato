@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="br.com.everton.backendextrato.ExtratoIntegrationTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2025-12-16T22:01:28.919Z" hostname="PCM03" time="0.114">
+  <properties/>
+  <testcase name="POST /api/extratos cria lançamento e retorna 201 com id" classname="br.com.everton.backendextrato.ExtratoIntegrationTest" time="0.039"/>
+  <testcase name="GET /api/extratos lista itens filtrando por contaId e calcula saldos" classname="br.com.everton.backendextrato.ExtratoIntegrationTest" time="0.04"/>
+  <testcase name="DELETE /api/extratos/{id} remove e retorna 204; inexistente 404" classname="br.com.everton.backendextrato.ExtratoIntegrationTest" time="0.018"/>
+  <testcase name="GET /api/extratos/{id} retorna 404 para inexistente e 200 após criação" classname="br.com.everton.backendextrato.ExtratoIntegrationTest" time="0.015"/>
+  <system-out><![CDATA[2025-12-16T19:01:28.915-03:00  INFO 96352 --- [backend-extrato] [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [br.com.everton.backendextrato.ExtratoIntegrationTest]: ExtratoIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-12-16T19:01:28.916-03:00  INFO 96352 --- [backend-extrato] [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration br.com.everton.backendextrato.BackendExtratoApplication for test class br.com.everton.backendextrato.ExtratoIntegrationTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

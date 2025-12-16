@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="br.com.everton.backendextrato.TestcontainersSmokeTest" tests="1" skipped="1" failures="0" errors="0" timestamp="2025-12-16T22:01:29.040Z" hostname="PCM03" time="0.0">
+  <properties/>
+  <testcase name="loadsContextWithMySQLContainer()" classname="br.com.everton.backendextrato.TestcontainersSmokeTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
