@@ -1,0 +1,235 @@
+{
+  "info": {
+    "_postman_id": "a3a6bb8a-7c36-4a56-bf1a-7b3dbf0d1c10",
+    "name": "Backend Extrato",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Collection para testar a API do Backend Extrato (porta 8083)."
+  },
+  "item": [
+    {
+      "name": "Entradas - Remover por ID",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/entradas/{{entradaId}}",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "entradas", "{{entradaId}}" ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 204 ou 404', function () { pm.expect([204,404]).to.include(pm.response.code); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Entradas - Criar",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Sioux\",\n  \"tipo\": \"PJ\",\n  \"valor\": 15000,\n  \"taxaImposto\": 6,\n  \"mesesVigencia\": [1,2,3,4,5,6,7,8,9,10,11,12]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/entradas",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "entradas" ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+              "pm.test('Retorna id da entrada', function () { var json = pm.response.json(); pm.expect(json).to.have.property('id'); });",
+              "pm.test('Payload possui campos esperados', function () { var json = pm.response.json(); pm.expect(json).to.have.property('nome'); pm.expect(json).to.have.property('tipo'); pm.expect(json).to.have.property('valor'); pm.expect(json).to.have.property('taxaImposto'); pm.expect(json).to.have.property('mesesVigencia'); });",
+              "try { var json = pm.response.json(); if (json.id) { pm.collectionVariables.set('entradaId', json.id); } } catch(e) {}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Entradas - Listar",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/entradas?page=0&size=20",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "entradas" ],
+          "query": [
+            { "key": "page", "value": "0" },
+            { "key": "size", "value": "20" }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Retorna array', function () { var json = pm.response.json(); pm.expect(Array.isArray(json)).to.be.true; });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Entradas - Obter por ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/entradas/{{entradaId}}",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "entradas", "{{entradaId}}" ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200 ou 404', function () { pm.expect([200,404]).to.include(pm.response.code); });",
+              "if (pm.response.code === 200) { pm.test('Payload possui id', function () { var json = pm.response.json(); pm.expect(json).to.have.property('id'); }); }"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Criar lançamento",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"data\": \"2025-01-10\",\n  \"tipo\": \"CREDITO\",\n  \"valor\": 150.75,\n  \"descricao\": \"Depósito\",\n  \"categoria\": \"SALARIO\",\n  \"contaId\": {{contaId}}\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/extratos",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "extratos" ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+              "pm.test('Retorna id do lançamento', function () { var json = pm.response.json(); pm.expect(json).to.have.property('id'); });",
+              "// Armazena o id criado para usar em outras requests",
+              "try { var json = pm.response.json(); if (json.id) { pm.collectionVariables.set('lancamentoId', json.id); } } catch(e) {}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Consultar extrato (paginado/período)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/extratos?contaId={{contaId}}&de={{de}}&ate={{ate}}&page=0&size=20",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "extratos" ],
+          "query": [
+            { "key": "contaId", "value": "{{contaId}}" },
+            { "key": "de", "value": "{{de}}" },
+            { "key": "ate", "value": "{{ate}}" },
+            { "key": "page", "value": "0" },
+            { "key": "size", "value": "20" }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Extrato possui campos básicos', function () { var json = pm.response.json(); pm.expect(json).to.have.property('contaId'); pm.expect(json).to.have.property('itens'); pm.expect(Array.isArray(json.itens)).to.be.true; });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Obter lançamento por ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/extratos/{{lancamentoId}}",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "extratos", "{{lancamentoId}}" ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200 ou 404', function () { pm.expect([200,404]).to.include(pm.response.code); });",
+              "if (pm.response.code === 200) { pm.test('Payload possui id', function () { var json = pm.response.json(); pm.expect(json).to.have.property('id'); }); }"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Excluir lançamento por ID",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/extratos/{{lancamentoId}}",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "extratos", "{{lancamentoId}}" ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 204 ou 404', function () { pm.expect([204,404]).to.include(pm.response.code); });"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8083" },
+    { "key": "contaId", "value": "123" },
+    { "key": "de", "value": "2025-01-01" },
+    { "key": "ate", "value": "2025-01-31" },
+    { "key": "lancamentoId", "value": "1" },
+    { "key": "entradaId", "value": "1" }
+  ]
+}
