@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="br.com.everton.backendextrato.BackendExtratoApplicationTests" tests="1" skipped="0" failures="0" errors="0" timestamp="2025-12-16T22:01:26.047Z" hostname="PCM03" time="1.276">
+<testsuite name="br.com.everton.backendextrato.BackendExtratoApplicationTests" tests="1" skipped="0" failures="0" errors="0" timestamp="2025-12-17T15:00:15.681Z" hostname="PCM03" time="1.244">
   <properties/>
-  <testcase name="contextLoads()" classname="br.com.everton.backendextrato.BackendExtratoApplicationTests" time="1.276"/>
-  <system-out><![CDATA[19:01:24.519 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [br.com.everton.backendextrato.BackendExtratoApplicationTests]: BackendExtratoApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-19:01:24.598 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration br.com.everton.backendextrato.BackendExtratoApplication for test class br.com.everton.backendextrato.BackendExtratoApplicationTests
+  <testcase name="contextLoads()" classname="br.com.everton.backendextrato.BackendExtratoApplicationTests" time="1.244"/>
+  <system-out><![CDATA[12:00:13.611 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [br.com.everton.backendextrato.BackendExtratoApplicationTests]: BackendExtratoApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+12:00:13.741 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration br.com.everton.backendextrato.BackendExtratoApplication for test class br.com.everton.backendextrato.BackendExtratoApplicationTests
 
   .   ____          _            __ _ _
  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
@@ -14,9 +14,9 @@
 
  :: Spring Boot ::                (v4.0.0)
 
-2025-12-16T19:01:24.968-03:00  INFO 96352 --- [backend-extrato] [    Test worker] b.c.e.b.BackendExtratoApplicationTests   : Starting BackendExtratoApplicationTests using Java 17.0.12 with PID 96352 (started by evert in C:\dev\projects\backend\sioux\backend-extrato)
-2025-12-16T19:01:24.969-03:00  INFO 96352 --- [backend-extrato] [    Test worker] b.c.e.b.BackendExtratoApplicationTests   : No active profile set, falling back to 1 default profile: "default"
-2025-12-16T19:01:26.035-03:00  INFO 96352 --- [backend-extrato] [    Test worker] b.c.e.b.BackendExtratoApplicationTests   : Started BackendExtratoApplicationTests in 1.331 seconds (process running for 2.475)
+2025-12-17T12:00:14.256-03:00  INFO 103064 --- [backend-extrato] [    Test worker] b.c.e.b.BackendExtratoApplicationTests   : Starting BackendExtratoApplicationTests using Java 17.0.12 with PID 103064 (started by evert in C:\dev\projects\backend\sioux\backend-extrato)
+2025-12-17T12:00:14.259-03:00  INFO 103064 --- [backend-extrato] [    Test worker] b.c.e.b.BackendExtratoApplicationTests   : No active profile set, falling back to 1 default profile: "default"
+2025-12-17T12:00:15.667-03:00  INFO 103064 --- [backend-extrato] [    Test worker] b.c.e.b.BackendExtratoApplicationTests   : Started BackendExtratoApplicationTests in 1.748 seconds (process running for 8.538)
 ]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="br.com.everton.backendextrato.it.ExtratoIntegrationTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2025-12-16T22:01:29.054Z" hostname="PCM03" time="0.005">
+<testsuite name="br.com.everton.backendextrato.it.ExtratoIntegrationTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2025-12-17T15:00:18.879Z" hostname="PCM03" time="0.006">
   <properties/>
-  <testcase name="GET /api/extratos/{id} inexistente retorna 404" classname="br.com.everton.backendextrato.it.ExtratoIntegrationTest" time="0.005"/>
-  <system-out><![CDATA[2025-12-16T19:01:29.042-03:00  INFO 96352 --- [backend-extrato] [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [br.com.everton.backendextrato.it.ExtratoIntegrationTest]: ExtratoIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-2025-12-16T19:01:29.050-03:00  INFO 96352 --- [backend-extrato] [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration br.com.everton.backendextrato.BackendExtratoApplication for test class br.com.everton.backendextrato.it.ExtratoIntegrationTest
+  <testcase name="GET /api/extratos/{id} inexistente retorna 404" classname="br.com.everton.backendextrato.it.ExtratoIntegrationTest" time="0.006"/>
+  <system-out><![CDATA[2025-12-17T12:00:18.866-03:00  INFO 103064 --- [backend-extrato] [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [br.com.everton.backendextrato.it.ExtratoIntegrationTest]: ExtratoIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-12-17T12:00:18.876-03:00  INFO 103064 --- [backend-extrato] [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration br.com.everton.backendextrato.BackendExtratoApplication for test class br.com.everton.backendextrato.it.ExtratoIntegrationTest
 ]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>
