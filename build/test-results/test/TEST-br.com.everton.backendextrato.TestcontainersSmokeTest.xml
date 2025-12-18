@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="br.com.everton.backendextrato.TestcontainersSmokeTest" tests="1" skipped="1" failures="0" errors="0" timestamp="2025-12-17T15:00:18.863Z" hostname="PCM03" time="0.0">
+<testsuite name="br.com.everton.backendextrato.TestcontainersSmokeTest" tests="1" skipped="1" failures="0" errors="0" timestamp="2025-12-18T17:50:29.608Z" hostname="PCM03" time="0.0">
   <properties/>
   <testcase name="loadsContextWithMySQLContainer()" classname="br.com.everton.backendextrato.TestcontainersSmokeTest" time="0.0">
     <skipped/>
