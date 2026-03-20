@@ -1,9 +1,9 @@
-FROM eclipse-temurin:21-jre
+FROM public.ecr.aws/amazoncorretto/amazoncorretto:21-alpine-jdk
 
 WORKDIR /app
 
-COPY build/libs/*.jar app.jar
+COPY build/libs/*.jar /app/app.jar
 
 EXPOSE 8083
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
