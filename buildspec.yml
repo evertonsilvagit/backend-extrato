@@ -1,14 +1,40 @@
 version: 0.2
 
+env:
+  variables:
+    AWS_DEFAULT_REGION: us-east-1
+    AWS_ACCOUNT_ID: "116671358684"
+    REPOSITORY_URI: "116671358684.dkr.ecr.us-east-1.amazonaws.com/backend-extrato"
+    IMAGE_TAG: "latest"
+
 phases:
   install:
     runtime-versions:
       java: corretto21
     commands:
-      - chmod +x gradlew
+      - echo "Install phase started"
+
+  pre_build:
+    commands:
+      - echo "Logging in to Amazon ECR..."
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+
   build:
     commands:
+      - echo "Building Java application..."
+      - chmod +x gradlew
       - ./gradlew clean build
+      - echo "Building Docker image..."
+      - docker build -t $REPOSITORY_URI:$IMAGE_TAG .
+      - docker tag $REPOSITORY_URI:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG
+
+  post_build:
+    commands:
+      - echo "Pushing Docker image..."
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - printf '[{"name":"backend-extrato","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+      - echo "Build completed"
+
 artifacts:
   files:
-    - build/libs/*.jar
+    - imagedefinitions.json
