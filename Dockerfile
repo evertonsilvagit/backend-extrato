@@ -1,4 +1,4 @@
-FROM public.ecr.aws/amazoncorretto/amazoncorretto:21-alpine-jdk
+FROM public.ecr.aws/docker/library/amazoncorretto:21-alpine-jdk
 
 WORKDIR /app
 
