@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir /b openspecchanges)",
+      "Bash(dir /b openspecspecs)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

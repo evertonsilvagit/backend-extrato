@@ -14,10 +14,11 @@ public class CorsConfig {
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
-        // Permite origens de desenvolvimento comuns: CRA (3000) e Vite (5173)
         config.setAllowedOrigins(List.of(
                 "http://localhost:3000",
                 "http://localhost:5173",
+                "http://192.168.18.30:5173",
+                "http://pcm03:5173",
                 "https://frontend-extrato.vercel.app"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));

@@ -1,0 +1,14 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      java: corretto21
+    commands:
+      - chmod +x gradlew
+  build:
+    commands:
+      - ./gradlew clean build
+artifacts:
+  files:
+    - build/libs/*.jar
