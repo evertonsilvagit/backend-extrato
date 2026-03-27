@@ -6,6 +6,7 @@ env:
     AWS_ACCOUNT_ID: "116671358684"
     REPOSITORY_URI: "116671358684.dkr.ecr.us-east-1.amazonaws.com/backend-extrato"
     IMAGE_TAG: "latest"
+    APP_DIR: "backend-extrato"
 
 phases:
   install:
@@ -20,6 +21,17 @@ phases:
   build:
     commands:
       - echo Build da aplicacao
+      - |
+        if [ -f gradlew ] && [ -f Dockerfile ]; then
+          export APP_PATH="."
+        elif [ -f "$APP_DIR/gradlew" ] && [ -f "$APP_DIR/Dockerfile" ]; then
+          export APP_PATH="$APP_DIR"
+        else
+          echo "Nao foi possivel localizar gradlew e Dockerfile em . ou $APP_DIR"
+          exit 1
+        fi
+      - echo APP_PATH=$APP_PATH
+      - cd $APP_PATH
       - chmod +x gradlew
       - ./gradlew clean build
       - echo Build da imagem Docker
