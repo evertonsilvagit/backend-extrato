@@ -1,0 +1,483 @@
+{
+  "info": {
+    "_postman_id": "f5e3ef8a-a9e4-4f0c-8f7d-80c20d1f6778",
+    "name": "Backend Extrato",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Collection para testar a API backend-extrato localmente."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8083"
+    },
+    {
+      "key": "contaId",
+      "value": "1"
+    },
+    {
+      "key": "entradaId",
+      "value": "1"
+    },
+    {
+      "key": "dividaId",
+      "value": "1"
+    },
+    {
+      "key": "lancamentoId",
+      "value": "1"
+    },
+    {
+      "key": "pushEndpoint",
+      "value": "https://fcm.googleapis.com/fcm/send/abc123"
+    }
+  ],
+  "item": [
+    {
+      "name": "Contas",
+      "item": [
+        {
+          "name": "Criar conta",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": null,\n  \"descricao\": \"Cartao Nubank\",\n  \"valor\": 1250.50,\n  \"diaPagamento\": 10,\n  \"categoria\": \"CARTAO\",\n  \"mesesVigencia\": [1, 2, 3, 4, 5, 6]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/contas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "contas"
+              ]
+            },
+            "description": "Cria ou atualiza uma conta."
+          }
+        },
+        {
+          "name": "Listar contas",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/contas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "contas"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Obter conta por id",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/contas/{{contaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "contas",
+                "{{contaId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remover conta",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/contas/{{contaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "contas",
+                "{{contaId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Entradas",
+      "item": [
+        {
+          "name": "Criar entrada",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Salario\",\n  \"tipo\": \"FIXA\",\n  \"valor\": 5000.00,\n  \"taxaImposto\": 0,\n  \"mesesVigencia\": [1, 2, 3, 4, 5, 6]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/entradas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entradas"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar entradas",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/entradas?page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entradas"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Obter entrada por id",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/entradas/{{entradaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entradas",
+                "{{entradaId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remover entrada",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/entradas/{{entradaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entradas",
+                "{{entradaId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dividas",
+      "item": [
+        {
+          "name": "Criar divida",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": null,\n  \"description\": \"Financiamento moto\",\n  \"amount\": 890.75,\n  \"group\": \"TRANSPORTE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/dividas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dividas"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar dividas",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/dividas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dividas"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remover divida",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/dividas/{{dividaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dividas",
+                "{{dividaId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Extratos",
+      "item": [
+        {
+          "name": "Criar lancamento",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": \"2026-03-27\",\n  \"tipo\": \"DEBITO\",\n  \"valor\": 150.90,\n  \"descricao\": \"Supermercado\",\n  \"categoria\": \"ALIMENTACAO\",\n  \"contaId\": {{contaId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/extratos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "extratos"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Consultar extrato",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/extratos?contaId={{contaId}}&de=2026-03-01&ate=2026-03-31&page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "extratos"
+              ],
+              "query": [
+                {
+                  "key": "contaId",
+                  "value": "{{contaId}}"
+                },
+                {
+                  "key": "de",
+                  "value": "2026-03-01"
+                },
+                {
+                  "key": "ate",
+                  "value": "2026-03-31"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Obter lancamento por id",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/extratos/{{lancamentoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "extratos",
+                "{{lancamentoId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remover lancamento",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/extratos/{{lancamentoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "extratos",
+                "{{lancamentoId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Actuator",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/actuator/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notificacoes",
+      "item": [
+        {
+          "name": "Registrar subscription",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"endpoint\": \"{{pushEndpoint}}\",\n  \"p256dh\": \"BOrandomBrowserKey\",\n  \"auth\": \"randomAuthSecret\",\n  \"userEmail\": \"user@example.com\",\n  \"userName\": \"Everton\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/notificacoes/subscriptions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notificacoes",
+                "subscriptions"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remover subscription",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"endpoint\": \"{{pushEndpoint}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/notificacoes/subscriptions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notificacoes",
+                "subscriptions"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Disparar push de teste",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Extrato atualizado\",\n  \"body\": \"Um novo lancamento foi registrado.\",\n  \"url\": \"/extrato\",\n  \"userEmail\": \"user@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/notificacoes/teste",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notificacoes",
+                "teste"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
