@@ -38,7 +38,7 @@ public class ExtratoController {
     @GetMapping
     public ResponseEntity<ExtratoResponse> listar(
             @RequestParam Long contaId,
-            @RequestParam(required = false) String ownerEmail,
+            @RequestHeader(value = "X-Owner-Email", required = false) String ownerEmail,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate de,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate ate,
             @RequestParam(required = false) Integer page,
@@ -57,7 +57,7 @@ public class ExtratoController {
     @GetMapping("/{id}")
     public ResponseEntity<?> obter(
             @PathVariable Long id,
-            @RequestParam(required = false) String ownerEmail,
+            @RequestHeader(value = "X-Owner-Email", required = false) String ownerEmail,
             HttpServletRequest httpServletRequest
     ) {
         try {
@@ -73,7 +73,7 @@ public class ExtratoController {
     @PostMapping
     public ResponseEntity<?> criar(
             @RequestBody CreateLancamentoRequest request,
-            @RequestParam(required = false) String ownerEmail,
+            @RequestHeader(value = "X-Owner-Email", required = false) String ownerEmail,
             HttpServletRequest httpServletRequest
     ) {
         try {
@@ -89,7 +89,7 @@ public class ExtratoController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> remover(
             @PathVariable Long id,
-            @RequestParam(required = false) String ownerEmail,
+            @RequestHeader(value = "X-Owner-Email", required = false) String ownerEmail,
             HttpServletRequest httpServletRequest
     ) {
         try {

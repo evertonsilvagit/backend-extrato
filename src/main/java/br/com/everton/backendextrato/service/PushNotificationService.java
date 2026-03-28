@@ -48,22 +48,28 @@ public class PushNotificationService {
     @Transactional
     public PushNotificationTestResponse sendTest(String userEmail, PushNotificationTestRequest request) {
         validate(request);
+        return sendToUser(userEmail, request.title(), request.body(), request.url());
+    }
+
+    @Transactional
+    public PushNotificationTestResponse sendToUser(String userEmail, String title, String body, String url) {
+        validatePayload(title, body);
         ensureConfigured();
 
         List<PushSubscription> targets = findTargets(userEmail);
         if (targets.isEmpty()) {
-            log.info("Push test requested but no subscriptions matched authenticated userEmail={}", sanitize(userEmail));
+            log.info("Push requested but no subscriptions matched userEmail={}", sanitize(userEmail));
             return new PushNotificationTestResponse(0, 0, 0, 0);
         }
 
-        String payload = buildPayload(request);
+        String payload = buildPayload(title, body, url);
         PushService pushService = buildPushService();
 
         log.info(
-                "Sending push test to {} subscription(s) with userEmail={} title={}",
+                "Sending push to {} subscription(s) with userEmail={} title={}",
                 targets.size(),
                 sanitize(userEmail),
-                sanitize(request.title())
+                sanitize(title)
         );
 
         int delivered = 0;
@@ -133,10 +139,14 @@ public class PushNotificationService {
         if (request == null) {
             throw new IllegalArgumentException("payload obrigatorio");
         }
-        if (request.title() == null || request.title().isBlank()) {
+        validatePayload(request.title(), request.body());
+    }
+
+    private void validatePayload(String title, String body) {
+        if (title == null || title.isBlank()) {
             throw new IllegalArgumentException("title e obrigatorio");
         }
-        if (request.body() == null || request.body().isBlank()) {
+        if (body == null || body.isBlank()) {
             throw new IllegalArgumentException("body e obrigatorio");
         }
     }
@@ -162,13 +172,13 @@ public class PushNotificationService {
         }
     }
 
-    private String buildPayload(PushNotificationTestRequest request) {
+    private String buildPayload(String title, String body, String url) {
         StringBuilder payload = new StringBuilder();
         payload.append("{");
-        payload.append("\"title\":\"").append(escapeJson(request.title())).append("\"");
-        payload.append(",\"body\":\"").append(escapeJson(request.body())).append("\"");
-        if (request.url() != null && !request.url().isBlank()) {
-            payload.append(",\"url\":\"").append(escapeJson(request.url().trim())).append("\"");
+        payload.append("\"title\":\"").append(escapeJson(title)).append("\"");
+        payload.append(",\"body\":\"").append(escapeJson(body)).append("\"");
+        if (url != null && !url.isBlank()) {
+            payload.append(",\"url\":\"").append(escapeJson(url.trim())).append("\"");
         }
         payload.append("}");
         return payload.toString();
