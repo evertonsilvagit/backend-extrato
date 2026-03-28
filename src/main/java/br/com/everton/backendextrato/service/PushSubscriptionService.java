@@ -20,7 +20,7 @@ public class PushSubscriptionService {
     }
 
     @Transactional
-    public PushSubscriptionResponse register(PushSubscriptionRequest request) {
+    public PushSubscriptionResponse register(String userEmail, String userName, PushSubscriptionRequest request) {
         validate(request);
 
         PushSubscription subscription = repository.findByEndpoint(request.endpoint())
@@ -30,8 +30,8 @@ public class PushSubscriptionService {
         subscription.setEndpoint(request.endpoint().trim());
         subscription.setP256dh(request.p256dh().trim());
         subscription.setAuth(request.auth().trim());
-        subscription.setUserEmail(normalize(request.userEmail()));
-        subscription.setUserName(normalize(request.userName()));
+        subscription.setUserEmail(normalize(userEmail));
+        subscription.setUserName(normalize(userName));
 
         PushSubscription saved = repository.save(subscription);
         return new PushSubscriptionResponse(
@@ -52,9 +52,7 @@ public class PushSubscriptionService {
     @Transactional(readOnly = true)
     public List<PushSubscriptionDetailsResponse> list(String userEmail) {
         List<PushSubscription> subscriptions =
-                userEmail == null || userEmail.isBlank()
-                        ? repository.findAll()
-                        : repository.findAllByUserEmailIgnoreCase(userEmail.trim());
+                repository.findAllByUserEmailIgnoreCase(userEmail.trim());
 
         return subscriptions.stream()
                 .map(subscription -> new PushSubscriptionDetailsResponse(

@@ -21,11 +21,12 @@ public class DividaService {
     }
 
     @Transactional
-    public DividaDto salvar(DividaDto dto) {
+    public DividaDto salvar(String userEmail, DividaDto dto) {
         validar(dto);
         Divida entity;
         if (dto.id() != null) {
-            entity = repository.findById(dto.id()).orElse(new Divida());
+            entity = repository.findByIdAndUserEmailIgnoreCase(dto.id(), userEmail)
+                    .orElseThrow(() -> new IllegalArgumentException("Dívida não encontrada para o usuário autenticado."));
         } else {
             entity = new Divida();
         }
@@ -33,22 +34,24 @@ public class DividaService {
         entity.setDescricao(dto.descricao());
         entity.setValor(dto.valor());
         entity.setGrupo(dto.grupo());
+        entity.setUserEmail(userEmail);
 
         Divida salvo = repository.save(entity);
         return toDto(salvo);
     }
 
     @Transactional(readOnly = true)
-    public List<DividaDto> listar() {
-        return repository.findAll().stream()
+    public List<DividaDto> listar(String userEmail) {
+        return repository.findAllByUserEmailIgnoreCase(userEmail).stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
 
     @Transactional
-    public boolean remover(Long id) {
-        if (!repository.existsById(id)) return false;
-        repository.deleteById(id);
+    public boolean remover(String userEmail, Long id) {
+        Optional<Divida> divida = repository.findByIdAndUserEmailIgnoreCase(id, userEmail);
+        if (divida.isEmpty()) return false;
+        repository.delete(divida.get());
         return true;
     }
 

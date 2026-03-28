@@ -46,13 +46,13 @@ public class PushNotificationService {
     }
 
     @Transactional
-    public PushNotificationTestResponse sendTest(PushNotificationTestRequest request) {
+    public PushNotificationTestResponse sendTest(String userEmail, PushNotificationTestRequest request) {
         validate(request);
         ensureConfigured();
 
-        List<PushSubscription> targets = findTargets(request.userEmail());
+        List<PushSubscription> targets = findTargets(userEmail);
         if (targets.isEmpty()) {
-            log.info("Push test requested but no subscriptions matched filter userEmail={}", sanitize(request.userEmail()));
+            log.info("Push test requested but no subscriptions matched authenticated userEmail={}", sanitize(userEmail));
             return new PushNotificationTestResponse(0, 0, 0, 0);
         }
 
@@ -62,7 +62,7 @@ public class PushNotificationService {
         log.info(
                 "Sending push test to {} subscription(s) with userEmail={} title={}",
                 targets.size(),
-                sanitize(request.userEmail()),
+                sanitize(userEmail),
                 sanitize(request.title())
         );
 
@@ -126,9 +126,6 @@ public class PushNotificationService {
     }
 
     private List<PushSubscription> findTargets(String userEmail) {
-        if (userEmail == null || userEmail.isBlank()) {
-            return repository.findAll();
-        }
         return repository.findAllByUserEmailIgnoreCase(userEmail.trim());
     }
 

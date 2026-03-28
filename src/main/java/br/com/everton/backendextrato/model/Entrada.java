@@ -28,16 +28,21 @@ public class Entrada {
     @OneToMany(mappedBy = "entrada", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<EntradaMes> meses = new ArrayList<>();
 
+    @Column(name = "user_email")
+    private String userEmail;
+
     public Long getId() { return id; }
     public String getNome() { return nome; }
     public String getTipo() { return tipo; }
     public BigDecimal getValor() { return valor; }
     public BigDecimal getTaxaImposto() { return taxaImposto; }
     public List<EntradaMes> getMeses() { return meses; }
+    public String getUserEmail() { return userEmail; }
 
     public void setNome(String nome) { this.nome = nome; }
     public void setTipo(String tipo) { this.tipo = tipo; }
     public void setValor(BigDecimal valor) { this.valor = valor; }
     public void setTaxaImposto(BigDecimal taxaImposto) { this.taxaImposto = taxaImposto; }
     public void setMeses(List<EntradaMes> meses) { this.meses = meses; }
+    public void setUserEmail(String userEmail) { this.userEmail = userEmail; }
 }

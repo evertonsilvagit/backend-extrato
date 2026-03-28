@@ -25,7 +25,7 @@ public class EntradaService {
     }
 
     @Transactional
-    public EntradaDto criar(CreateEntradaRequest req) {
+    public EntradaDto criar(String userEmail, CreateEntradaRequest req) {
         validar(req);
 
         Entrada ent = new Entrada();
@@ -42,28 +42,30 @@ public class EntradaService {
             return em;
         }).collect(Collectors.toList());
         ent.setMeses(meses);
+        ent.setUserEmail(userEmail);
 
         Entrada salvo = entradaRepository.save(ent);
         return toDto(salvo);
     }
 
     @Transactional(readOnly = true)
-    public Optional<EntradaDto> buscarPorId(Long id) {
-        return entradaRepository.findById(id).map(this::toDto);
+    public Optional<EntradaDto> buscarPorId(String userEmail, Long id) {
+        return entradaRepository.findByIdAndUserEmailIgnoreCase(id, userEmail).map(this::toDto);
     }
 
     @Transactional(readOnly = true)
-    public List<EntradaDto> listar(Integer page, Integer size) {
+    public List<EntradaDto> listar(String userEmail, Integer page, Integer size) {
         int p = page == null || page < 0 ? 0 : page;
         int s = size == null || size <= 0 ? 20 : size;
-        Page<Entrada> pagina = entradaRepository.findAll(PageRequest.of(p, s));
+        Page<Entrada> pagina = entradaRepository.findAllByUserEmailIgnoreCase(userEmail, PageRequest.of(p, s));
         return pagina.getContent().stream().map(this::toDto).collect(Collectors.toList());
     }
 
     @Transactional
-    public boolean remover(Long id) {
-        if (!entradaRepository.existsById(id)) return false;
-        entradaRepository.deleteById(id);
+    public boolean remover(String userEmail, Long id) {
+        Optional<Entrada> entrada = entradaRepository.findByIdAndUserEmailIgnoreCase(id, userEmail);
+        if (entrada.isEmpty()) return false;
+        entradaRepository.delete(entrada.get());
         return true;
     }
 

@@ -21,13 +21,13 @@ public class ContaService {
     }
 
     @Transactional
-    public ContaDto criar(ContaDto req) {
+    public ContaDto criar(String userEmail, ContaDto req) {
         validar(req);
 
         Conta conta;
         if (req.id() != null) {
-            conta = contaRepository.findById(req.id())
-                    .orElse(new Conta());
+            conta = contaRepository.findByIdAndUserEmailIgnoreCase(req.id(), userEmail)
+                    .orElseThrow(() -> new IllegalArgumentException("Conta não encontrada para o usuário autenticado."));
         } else {
             conta = new Conta();
         }
@@ -37,27 +37,29 @@ public class ContaService {
         conta.setDiaPagamento(req.diaPagamento());
         conta.setCategoria(req.categoria());
         conta.setMesesVigencia(req.mesesVigencia());
+        conta.setUserEmail(userEmail);
 
         Conta salvo = contaRepository.save(conta);
         return toDto(salvo);
     }
 
     @Transactional(readOnly = true)
-    public List<ContaDto> listar() {
-        return contaRepository.findAll().stream()
+    public List<ContaDto> listar(String userEmail) {
+        return contaRepository.findAllByUserEmailIgnoreCase(userEmail).stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public Optional<ContaDto> buscarPorId(Long id) {
-        return contaRepository.findById(id).map(this::toDto);
+    public Optional<ContaDto> buscarPorId(String userEmail, Long id) {
+        return contaRepository.findByIdAndUserEmailIgnoreCase(id, userEmail).map(this::toDto);
     }
 
     @Transactional
-    public boolean remover(Long id) {
-        if (!contaRepository.existsById(id)) return false;
-        contaRepository.deleteById(id);
+    public boolean remover(String userEmail, Long id) {
+        Optional<Conta> conta = contaRepository.findByIdAndUserEmailIgnoreCase(id, userEmail);
+        if (conta.isEmpty()) return false;
+        contaRepository.delete(conta.get());
         return true;
     }
 

@@ -1,5 +1,7 @@
 package br.com.everton.backendextrato;
 
+import br.com.everton.backendextrato.auth.AuthTokenFilter;
+import br.com.everton.backendextrato.auth.AuthenticatedUser;
 import br.com.everton.backendextrato.model.PushSubscription;
 import br.com.everton.backendextrato.repository.PushSubscriptionRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,6 +61,10 @@ class NotificationControllerIntegrationTest {
                 """;
 
         mockMvc.perform(post("/api/notificacoes/subscriptions")
+                        .requestAttr(
+                                AuthTokenFilter.AUTHENTICATED_USER_ATTRIBUTE,
+                                new AuthenticatedUser(1L, "user@example.com", "Everton")
+                        )
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isCreated())
@@ -76,6 +82,10 @@ class NotificationControllerIntegrationTest {
                 """;
 
         mockMvc.perform(post("/api/notificacoes/subscriptions")
+                        .requestAttr(
+                                AuthTokenFilter.AUTHENTICATED_USER_ATTRIBUTE,
+                                new AuthenticatedUser(1L, "updated@example.com", "Evert")
+                        )
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(updatedPayload))
                 .andExpect(status().isOk())

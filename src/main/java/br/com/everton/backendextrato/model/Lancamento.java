@@ -31,6 +31,9 @@ public class Lancamento {
     @Column(name = "conta_id", nullable = false)
     private Long contaId;
 
+    @Column(name = "user_email")
+    private String userEmail;
+
     public Long getId() { return id; }
     public LocalDate getData() { return data; }
     public Tipo getTipo() { return tipo; }
@@ -38,6 +41,7 @@ public class Lancamento {
     public String getDescricao() { return descricao; }
     public String getCategoria() { return categoria; }
     public Long getContaId() { return contaId; }
+    public String getUserEmail() { return userEmail; }
 
     public void setData(LocalDate data) { this.data = data; }
     public void setTipo(Tipo tipo) { this.tipo = tipo; }
@@ -45,4 +49,5 @@ public class Lancamento {
     public void setDescricao(String descricao) { this.descricao = descricao; }
     public void setCategoria(String categoria) { this.categoria = categoria; }
     public void setContaId(Long contaId) { this.contaId = contaId; }
+    public void setUserEmail(String userEmail) { this.userEmail = userEmail; }
 }

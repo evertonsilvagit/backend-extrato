@@ -3,8 +3,10 @@ package br.com.everton.backendextrato.service;
 import br.com.everton.backendextrato.dto.CreateLancamentoRequest;
 import br.com.everton.backendextrato.dto.ExtratoResponse;
 import br.com.everton.backendextrato.dto.LancamentoDto;
+import br.com.everton.backendextrato.model.Conta;
 import br.com.everton.backendextrato.model.Lancamento;
 import br.com.everton.backendextrato.model.Tipo;
+import br.com.everton.backendextrato.repository.ContaRepository;
 import br.com.everton.backendextrato.repository.LancamentoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,14 +22,17 @@ import java.util.stream.Collectors;
 public class ExtratoService {
 
     private final LancamentoRepository lancamentoRepository;
+    private final ContaRepository contaRepository;
 
-    public ExtratoService(LancamentoRepository lancamentoRepository) {
+    public ExtratoService(LancamentoRepository lancamentoRepository, ContaRepository contaRepository) {
         this.lancamentoRepository = lancamentoRepository;
+        this.contaRepository = contaRepository;
     }
 
     @Transactional
-    public LancamentoDto criarLancamento(CreateLancamentoRequest req) {
+    public LancamentoDto criarLancamento(String userEmail, CreateLancamentoRequest req) {
         Tipo tipo = Tipo.valueOf(req.tipo().toUpperCase());
+        requireContaOwnedByUser(userEmail, req.contaId());
         Lancamento l = new Lancamento();
         l.setData(req.data());
         l.setTipo(tipo);
@@ -35,33 +40,36 @@ public class ExtratoService {
         l.setDescricao(req.descricao());
         l.setCategoria(req.categoria());
         l.setContaId(req.contaId());
+        l.setUserEmail(userEmail);
         Lancamento salvo = lancamentoRepository.save(l);
         return toDto(salvo);
     }
 
     @Transactional(readOnly = true)
-    public Optional<LancamentoDto> buscarPorId(Long id) {
-        return lancamentoRepository.findById(id).map(this::toDto);
+    public Optional<LancamentoDto> buscarPorId(String userEmail, Long id) {
+        return lancamentoRepository.findByIdAndUserEmailIgnoreCase(id, userEmail).map(this::toDto);
     }
 
     @Transactional
-    public boolean remover(Long id) {
-        if (!lancamentoRepository.existsById(id)) return false;
-        lancamentoRepository.deleteById(id);
+    public boolean remover(String userEmail, Long id) {
+        Optional<Lancamento> lancamento = lancamentoRepository.findByIdAndUserEmailIgnoreCase(id, userEmail);
+        if (lancamento.isEmpty()) return false;
+        lancamentoRepository.delete(lancamento.get());
         return true;
     }
 
     @Transactional(readOnly = true)
-    public ExtratoResponse listarExtrato(Long contaId, LocalDate de, LocalDate ate, Integer page, Integer size) {
+    public ExtratoResponse listarExtrato(String userEmail, Long contaId, LocalDate de, LocalDate ate, Integer page, Integer size) {
         if (contaId == null) throw new IllegalArgumentException("contaId é obrigatório");
+        requireContaOwnedByUser(userEmail, contaId);
         LocalDate deEfetivo = de;
         LocalDate ateEfetivo = ate;
 
         List<Lancamento> noPeriodo;
         if (deEfetivo != null && ateEfetivo != null) {
-            noPeriodo = lancamentoRepository.findByContaIdAndDataBetweenOrderByDataAscIdAsc(contaId, deEfetivo, ateEfetivo);
+            noPeriodo = lancamentoRepository.findByUserEmailIgnoreCaseAndContaIdAndDataBetweenOrderByDataAscIdAsc(userEmail, contaId, deEfetivo, ateEfetivo);
         } else {
-            noPeriodo = lancamentoRepository.findByContaIdOrderByDataAscIdAsc(contaId);
+            noPeriodo = lancamentoRepository.findByUserEmailIgnoreCaseAndContaIdOrderByDataAscIdAsc(userEmail, contaId);
             if (deEfetivo != null) {
                 noPeriodo = noPeriodo.stream().filter(l -> !l.getData().isBefore(deEfetivo)).collect(Collectors.toList());
             }
@@ -80,7 +88,7 @@ public class ExtratoService {
         // Saldo anterior
         BigDecimal saldoAnterior = BigDecimal.ZERO;
         if (deEfetivo != null) {
-            List<Lancamento> anteriores = lancamentoRepository.findByContaIdAndDataBeforeOrderByDataAscIdAsc(contaId, deEfetivo);
+            List<Lancamento> anteriores = lancamentoRepository.findByUserEmailIgnoreCaseAndContaIdAndDataBeforeOrderByDataAscIdAsc(userEmail, contaId, deEfetivo);
             saldoAnterior = anteriores.stream().map(this::delta).reduce(BigDecimal.ZERO, BigDecimal::add);
         }
 
@@ -113,5 +121,13 @@ public class ExtratoService {
                 l.getCategoria(),
                 l.getContaId()
         );
+    }
+
+    private void requireContaOwnedByUser(String userEmail, Long contaId) {
+        Conta conta = contaRepository.findByIdAndUserEmailIgnoreCase(contaId, userEmail)
+                .orElseThrow(() -> new IllegalArgumentException("Conta não encontrada para o usuário autenticado."));
+        if (conta.getId() == null) {
+            throw new IllegalArgumentException("Conta não encontrada para o usuário autenticado.");
+        }
     }
 }

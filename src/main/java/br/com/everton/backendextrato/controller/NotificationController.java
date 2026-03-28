@@ -1,5 +1,7 @@
 package br.com.everton.backendextrato.controller;
 
+import br.com.everton.backendextrato.auth.AuthenticatedUser;
+import br.com.everton.backendextrato.auth.AuthenticatedUserResolver;
 import br.com.everton.backendextrato.dto.NotificationErrorResponse;
 import br.com.everton.backendextrato.dto.PushNotificationStatusResponse;
 import br.com.everton.backendextrato.dto.PushNotificationTestRequest;
@@ -10,6 +12,7 @@ import br.com.everton.backendextrato.dto.PushSubscriptionRequest;
 import br.com.everton.backendextrato.dto.PushSubscriptionResponse;
 import br.com.everton.backendextrato.service.PushNotificationService;
 import br.com.everton.backendextrato.service.PushSubscriptionService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,19 +25,26 @@ public class NotificationController {
 
     private final PushSubscriptionService pushSubscriptionService;
     private final PushNotificationService pushNotificationService;
+    private final AuthenticatedUserResolver authenticatedUserResolver;
 
     public NotificationController(
             PushSubscriptionService pushSubscriptionService,
-            PushNotificationService pushNotificationService
+            PushNotificationService pushNotificationService,
+            AuthenticatedUserResolver authenticatedUserResolver
     ) {
         this.pushSubscriptionService = pushSubscriptionService;
         this.pushNotificationService = pushNotificationService;
+        this.authenticatedUserResolver = authenticatedUserResolver;
     }
 
     @PostMapping("/subscriptions")
-    public ResponseEntity<PushSubscriptionResponse> register(@RequestBody PushSubscriptionRequest request) {
+    public ResponseEntity<PushSubscriptionResponse> register(
+            @RequestBody PushSubscriptionRequest request,
+            HttpServletRequest httpServletRequest
+    ) {
         try {
-            PushSubscriptionResponse response = pushSubscriptionService.register(request);
+            AuthenticatedUser user = authenticatedUserResolver.require(httpServletRequest);
+            PushSubscriptionResponse response = pushSubscriptionService.register(user.email(), user.name(), request);
             HttpStatus status = response.created() ? HttpStatus.CREATED : HttpStatus.OK;
             return ResponseEntity.status(status).body(response);
         } catch (IllegalArgumentException ex) {
@@ -54,9 +64,10 @@ public class NotificationController {
 
     @GetMapping("/subscriptions")
     public ResponseEntity<List<PushSubscriptionDetailsResponse>> list(
-            @RequestParam(required = false) String userEmail
+            HttpServletRequest httpServletRequest
     ) {
-        return ResponseEntity.ok(pushSubscriptionService.list(userEmail));
+        AuthenticatedUser user = authenticatedUserResolver.require(httpServletRequest);
+        return ResponseEntity.ok(pushSubscriptionService.list(user.email()));
     }
 
     @GetMapping("/status")
@@ -65,9 +76,10 @@ public class NotificationController {
     }
 
     @PostMapping("/teste")
-    public ResponseEntity<?> sendTest(@RequestBody PushNotificationTestRequest request) {
+    public ResponseEntity<?> sendTest(@RequestBody PushNotificationTestRequest request, HttpServletRequest httpServletRequest) {
         try {
-            PushNotificationTestResponse response = pushNotificationService.sendTest(request);
+            AuthenticatedUser user = authenticatedUserResolver.require(httpServletRequest);
+            PushNotificationTestResponse response = pushNotificationService.sendTest(user.email(), request);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(new NotificationErrorResponse(ex.getMessage()));

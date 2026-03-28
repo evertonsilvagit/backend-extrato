@@ -30,16 +30,21 @@ public class Conta {
     @Column
     private String categoria;
 
+    @Column(name = "user_email")
+    private String userEmail;
+
     public Long getId() { return id; }
     public String getDescricao() { return descricao; }
     public BigDecimal getValor() { return valor; }
     public Integer getDiaPagamento() { return diaPagamento; }
     public String getCategoria() { return categoria; }
+    public String getUserEmail() { return userEmail; }
 
     public void setDescricao(String descricao) { this.descricao = descricao; }
     public void setValor(BigDecimal valor) { this.valor = valor; }
     public void setDiaPagamento(Integer diaPagamento) { this.diaPagamento = diaPagamento; }
     public void setCategoria(String categoria) { this.categoria = categoria; }
+    public void setUserEmail(String userEmail) { this.userEmail = userEmail; }
 
     @Transient
     public List<Integer> getMesesVigencia() {

@@ -20,6 +20,9 @@ public class Divida {
     @Column(nullable = false)
     private String grupo;
 
+    @Column(name = "user_email")
+    private String userEmail;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -31,4 +34,6 @@ public class Divida {
 
     public String getGrupo() { return grupo; }
     public void setGrupo(String grupo) { this.grupo = grupo; }
+    public String getUserEmail() { return userEmail; }
+    public void setUserEmail(String userEmail) { this.userEmail = userEmail; }
 }
