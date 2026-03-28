@@ -18,9 +18,8 @@ public class CorsConfig {
                 "http://localhost:3000",
                 "http://localhost:4200",
                 "http://127.0.0.1:4200",
-                "http://localhost:5173",
                 "http://192.168.18.30:5173",
-                "http://pcm03:5173",
+                "http://localhost:5173",
                 "https://frontend-extrato.vercel.app"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
