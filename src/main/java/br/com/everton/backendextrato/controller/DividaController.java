@@ -33,7 +33,7 @@ public class DividaController {
 
     @GetMapping
     public ResponseEntity<?> listar(
-            @RequestHeader(value = "X-Owner-Email", required = false) String ownerEmail,
+            @RequestParam(required = false) String ownerEmail,
             HttpServletRequest httpServletRequest
     ) {
         try {
@@ -48,7 +48,7 @@ public class DividaController {
     @PostMapping
     public ResponseEntity<?> salvar(
             @RequestBody DividaDto dto,
-            @RequestHeader(value = "X-Owner-Email", required = false) String ownerEmail,
+            @RequestParam(required = false) String ownerEmail,
             HttpServletRequest httpServletRequest
     ) {
         try {
@@ -63,7 +63,7 @@ public class DividaController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> remover(
             @PathVariable Long id,
-            @RequestHeader(value = "X-Owner-Email", required = false) String ownerEmail,
+            @RequestParam(required = false) String ownerEmail,
             HttpServletRequest httpServletRequest
     ) {
         try {

@@ -34,7 +34,7 @@ public class ContaController {
     @PostMapping
     public ResponseEntity<?> criar(
             @RequestBody ContaDto request,
-            @RequestHeader(value = "X-Owner-Email", required = false) String ownerEmail,
+            @RequestParam(required = false) String ownerEmail,
             HttpServletRequest httpServletRequest
     ) {
         try {
@@ -49,7 +49,7 @@ public class ContaController {
 
     @GetMapping
     public ResponseEntity<?> listar(
-            @RequestHeader(value = "X-Owner-Email", required = false) String ownerEmail,
+            @RequestParam(required = false) String ownerEmail,
             HttpServletRequest httpServletRequest
     ) {
         try {
@@ -64,7 +64,7 @@ public class ContaController {
     @GetMapping("/{id}")
     public ResponseEntity<?> obter(
             @PathVariable Long id,
-            @RequestHeader(value = "X-Owner-Email", required = false) String ownerEmail,
+            @RequestParam(required = false) String ownerEmail,
             HttpServletRequest httpServletRequest
     ) {
         try {
@@ -81,7 +81,7 @@ public class ContaController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> remover(
             @PathVariable Long id,
-            @RequestHeader(value = "X-Owner-Email", required = false) String ownerEmail,
+            @RequestParam(required = false) String ownerEmail,
             HttpServletRequest httpServletRequest
     ) {
         try {

@@ -29,8 +29,7 @@ public class CorsConfig {
                 "Content-Type",
                 "Accept",
                 "Origin",
-                "X-Requested-With",
-                "X-Owner-Email"
+                "X-Requested-With"
         ));
         config.setExposedHeaders(List.of("Authorization"));
         config.setAllowCredentials(true);

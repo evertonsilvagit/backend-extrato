@@ -36,7 +36,7 @@ public class EntradaController {
     @PostMapping
     public ResponseEntity<?> criar(
             @RequestBody CreateEntradaRequest request,
-            @RequestHeader(value = "X-Owner-Email", required = false) String ownerEmail,
+            @RequestParam(required = false) String ownerEmail,
             HttpServletRequest httpServletRequest
     ) {
         try {
@@ -52,7 +52,7 @@ public class EntradaController {
     @GetMapping("/{id}")
     public ResponseEntity<?> obter(
             @PathVariable Long id,
-            @RequestHeader(value = "X-Owner-Email", required = false) String ownerEmail,
+            @RequestParam(required = false) String ownerEmail,
             HttpServletRequest httpServletRequest
     ) {
         try {
@@ -67,7 +67,7 @@ public class EntradaController {
 
     @GetMapping
     public ResponseEntity<List<EntradaDto>> listar(
-            @RequestHeader(value = "X-Owner-Email", required = false) String ownerEmail,
+            @RequestParam(required = false) String ownerEmail,
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size,
             HttpServletRequest httpServletRequest
@@ -84,7 +84,7 @@ public class EntradaController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> remover(
             @PathVariable Long id,
-            @RequestHeader(value = "X-Owner-Email", required = false) String ownerEmail,
+            @RequestParam(required = false) String ownerEmail,
             HttpServletRequest httpServletRequest
     ) {
         try {
