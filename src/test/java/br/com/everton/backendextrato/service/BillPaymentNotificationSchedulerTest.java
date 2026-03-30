@@ -1,5 +1,6 @@
 package br.com.everton.backendextrato.service;
 
+import br.com.everton.backendextrato.dto.BillPaymentNotificationRunResponse;
 import br.com.everton.backendextrato.dto.PushNotificationTestResponse;
 import br.com.everton.backendextrato.model.Conta;
 import br.com.everton.backendextrato.repository.BillPaymentNotificationLogRepository;
@@ -60,7 +61,7 @@ class BillPaymentNotificationSchedulerTest {
         when(pushNotificationService.sendToUser(eq("user@example.com"), any(), any(), eq("/contas")))
                 .thenReturn(new PushNotificationTestResponse(1, 1, 0, 0));
 
-        scheduler.sendDueBillNotifications(referenceDate);
+        BillPaymentNotificationRunResponse response = scheduler.sendDueBillNotifications(referenceDate);
 
         ArgumentCaptor<String> titleCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> bodyCaptor = ArgumentCaptor.forClass(String.class);
@@ -71,6 +72,14 @@ class BillPaymentNotificationSchedulerTest {
         assertThat(bodyCaptor.getValue()).contains("vencem 2 contas");
         assertThat(bodyCaptor.getValue()).contains("Internet");
         assertThat(bodyCaptor.getValue()).contains("Energia");
+        assertThat(response.referenceDate()).isEqualTo(referenceDate);
+        assertThat(response.dueUserCount()).isEqualTo(1);
+        assertThat(response.dueBillCount()).isEqualTo(2);
+        assertThat(response.triggeredUserCount()).isEqualTo(1);
+        assertThat(response.skippedAlreadySentCount()).isZero();
+        assertThat(response.usersWithoutSubscriptionsCount()).isZero();
+        assertThat(response.deliveredSubscriptionCount()).isEqualTo(1);
+        assertThat(response.failedSubscriptionCount()).isZero();
     }
 
     @Test
@@ -82,10 +91,18 @@ class BillPaymentNotificationSchedulerTest {
         when(notificationLogRepository.existsByUserEmailIgnoreCaseAndReferenceDate("user@example.com", referenceDate))
                 .thenReturn(true);
 
-        scheduler.sendDueBillNotifications(referenceDate);
+        BillPaymentNotificationRunResponse response = scheduler.sendDueBillNotifications(referenceDate);
 
         verify(pushNotificationService, never()).sendToUser(any(), any(), any(), any());
         verify(notificationLogRepository, never()).save(any());
+        assertThat(response.referenceDate()).isEqualTo(referenceDate);
+        assertThat(response.dueUserCount()).isEqualTo(1);
+        assertThat(response.dueBillCount()).isEqualTo(1);
+        assertThat(response.triggeredUserCount()).isZero();
+        assertThat(response.skippedAlreadySentCount()).isEqualTo(1);
+        assertThat(response.usersWithoutSubscriptionsCount()).isZero();
+        assertThat(response.deliveredSubscriptionCount()).isZero();
+        assertThat(response.failedSubscriptionCount()).isZero();
     }
 
     private Conta buildConta(String userEmail, String descricao, int diaPagamento, List<Integer> mesesVigencia, String valor) {

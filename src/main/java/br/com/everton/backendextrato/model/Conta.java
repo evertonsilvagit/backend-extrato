@@ -1,6 +1,7 @@
 package br.com.everton.backendextrato.model;
 
 import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,8 +28,9 @@ public class Conta {
     @Column(name = "meses_vigencia")
     private String mesesVigenciaRaw;
 
-    @Column
-    private String categoria;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "categoria_conta_id", nullable = false)
+    private CategoriaConta categoria;
 
     @Column(name = "user_email")
     private String userEmail;
@@ -37,13 +39,13 @@ public class Conta {
     public String getDescricao() { return descricao; }
     public BigDecimal getValor() { return valor; }
     public Integer getDiaPagamento() { return diaPagamento; }
-    public String getCategoria() { return categoria; }
+    public CategoriaConta getCategoria() { return categoria; }
     public String getUserEmail() { return userEmail; }
 
     public void setDescricao(String descricao) { this.descricao = descricao; }
     public void setValor(BigDecimal valor) { this.valor = valor; }
     public void setDiaPagamento(Integer diaPagamento) { this.diaPagamento = diaPagamento; }
-    public void setCategoria(String categoria) { this.categoria = categoria; }
+    public void setCategoria(CategoriaConta categoria) { this.categoria = categoria; }
     public void setUserEmail(String userEmail) { this.userEmail = userEmail; }
 
     @Transient
@@ -51,9 +53,27 @@ public class Conta {
         if (mesesVigenciaRaw == null || mesesVigenciaRaw.isEmpty()) {
             return new ArrayList<>();
         }
-        return Arrays.stream(mesesVigenciaRaw.split(","))
+
+        String normalized = mesesVigenciaRaw
+                .replace("[", "")
+                .replace("]", "")
+                .trim();
+
+        if (normalized.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        return Arrays.stream(normalized.split(","))
                 .map(String::trim)
-                .map(Integer::parseInt)
+                .filter(value -> !value.isEmpty())
+                .map(value -> {
+                    try {
+                        return Integer.parseInt(value);
+                    } catch (NumberFormatException ex) {
+                        return null;
+                    }
+                })
+                .filter(value -> value != null && value >= 1 && value <= 12)
                 .collect(Collectors.toList());
     }
 

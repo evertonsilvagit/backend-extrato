@@ -1,6 +1,15 @@
 package br.com.everton.backendextrato.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+
 import java.math.BigDecimal;
 
 @Entity
@@ -17,8 +26,9 @@ public class Divida {
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal valor;
 
-    @Column(nullable = false)
-    private String grupo;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "categoria_divida_id", nullable = false)
+    private CategoriaDivida categoria;
 
     @Column(name = "user_email")
     private String userEmail;
@@ -32,8 +42,9 @@ public class Divida {
     public BigDecimal getValor() { return valor; }
     public void setValor(BigDecimal valor) { this.valor = valor; }
 
-    public String getGrupo() { return grupo; }
-    public void setGrupo(String grupo) { this.grupo = grupo; }
+    public CategoriaDivida getCategoria() { return categoria; }
+    public void setCategoria(CategoriaDivida categoria) { this.categoria = categoria; }
+
     public String getUserEmail() { return userEmail; }
     public void setUserEmail(String userEmail) { this.userEmail = userEmail; }
 }

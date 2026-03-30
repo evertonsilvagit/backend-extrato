@@ -1,7 +1,9 @@
 package br.com.everton.backendextrato.service;
 
 import br.com.everton.backendextrato.dto.ContaDto;
+import br.com.everton.backendextrato.model.CategoriaConta;
 import br.com.everton.backendextrato.model.Conta;
+import br.com.everton.backendextrato.repository.CategoriaContaRepository;
 import br.com.everton.backendextrato.repository.ContaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,15 +11,16 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class ContaService {
 
     private final ContaRepository contaRepository;
+    private final CategoriaContaRepository categoriaRepository;
 
-    public ContaService(ContaRepository contaRepository) {
+    public ContaService(ContaRepository contaRepository, CategoriaContaRepository categoriaRepository) {
         this.contaRepository = contaRepository;
+        this.categoriaRepository = categoriaRepository;
     }
 
     @Transactional
@@ -32,10 +35,13 @@ public class ContaService {
             conta = new Conta();
         }
 
-        conta.setDescricao(req.descricao());
+        CategoriaConta categoria = categoriaRepository.findByUserEmailIgnoreCaseAndNomeIgnoreCase(userEmail, req.categoria().trim())
+                .orElseThrow(() -> new IllegalArgumentException("Categoria de conta inválida para o usuário autenticado."));
+
+        conta.setDescricao(req.descricao().trim());
         conta.setValor(req.valor());
         conta.setDiaPagamento(req.diaPagamento());
-        conta.setCategoria(req.categoria());
+        conta.setCategoria(categoria);
         conta.setMesesVigencia(req.mesesVigencia());
         conta.setUserEmail(userEmail);
 
@@ -47,7 +53,7 @@ public class ContaService {
     public List<ContaDto> listar(String userEmail) {
         return contaRepository.findAllByUserEmailIgnoreCase(userEmail).stream()
                 .map(this::toDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -69,7 +75,7 @@ public class ContaService {
                 c.getDescricao(),
                 c.getValor(),
                 c.getDiaPagamento(),
-                c.getCategoria(),
+                c.getCategoria() != null ? c.getCategoria().getNome() : "Sem categoria",
                 c.getMesesVigencia()
         );
     }
@@ -81,5 +87,7 @@ public class ContaService {
             throw new IllegalArgumentException("valor deve ser >= 0");
         if (req.diaPagamento() == null || req.diaPagamento() < 1 || req.diaPagamento() > 31)
             throw new IllegalArgumentException("diaPagamento deve estar entre 1 e 31");
+        if (req.categoria() == null || req.categoria().isBlank())
+            throw new IllegalArgumentException("categoria é obrigatória");
     }
 }

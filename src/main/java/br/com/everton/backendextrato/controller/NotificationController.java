@@ -2,6 +2,7 @@ package br.com.everton.backendextrato.controller;
 
 import br.com.everton.backendextrato.auth.AuthenticatedUser;
 import br.com.everton.backendextrato.auth.AuthenticatedUserResolver;
+import br.com.everton.backendextrato.dto.BillPaymentNotificationRunResponse;
 import br.com.everton.backendextrato.dto.NotificationErrorResponse;
 import br.com.everton.backendextrato.dto.PushNotificationStatusResponse;
 import br.com.everton.backendextrato.dto.PushNotificationTestRequest;
@@ -12,11 +13,14 @@ import br.com.everton.backendextrato.dto.PushSubscriptionRequest;
 import br.com.everton.backendextrato.dto.PushSubscriptionResponse;
 import br.com.everton.backendextrato.service.PushNotificationService;
 import br.com.everton.backendextrato.service.PushSubscriptionService;
+import br.com.everton.backendextrato.service.BillPaymentNotificationScheduler;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -25,15 +29,18 @@ public class NotificationController {
 
     private final PushSubscriptionService pushSubscriptionService;
     private final PushNotificationService pushNotificationService;
+    private final BillPaymentNotificationScheduler billPaymentNotificationScheduler;
     private final AuthenticatedUserResolver authenticatedUserResolver;
 
     public NotificationController(
             PushSubscriptionService pushSubscriptionService,
             PushNotificationService pushNotificationService,
+            BillPaymentNotificationScheduler billPaymentNotificationScheduler,
             AuthenticatedUserResolver authenticatedUserResolver
     ) {
         this.pushSubscriptionService = pushSubscriptionService;
         this.pushNotificationService = pushNotificationService;
+        this.billPaymentNotificationScheduler = billPaymentNotificationScheduler;
         this.authenticatedUserResolver = authenticatedUserResolver;
     }
 
@@ -79,7 +86,8 @@ public class NotificationController {
     public ResponseEntity<?> sendTest(@RequestBody PushNotificationTestRequest request, HttpServletRequest httpServletRequest) {
         try {
             AuthenticatedUser user = authenticatedUserResolver.require(httpServletRequest);
-            PushNotificationTestResponse response = pushNotificationService.sendTest(user.email(), request);
+            String targetUserEmail = hasText(request.userEmail()) ? request.userEmail().trim() : user.email();
+            PushNotificationTestResponse response = pushNotificationService.sendTest(targetUserEmail, request);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(new NotificationErrorResponse(ex.getMessage()));
@@ -87,5 +95,27 @@ public class NotificationController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new NotificationErrorResponse(ex.getMessage()));
         }
+    }
+
+    @PostMapping("/contas-vencendo/disparar")
+    public ResponseEntity<?> triggerDueBillNotifications(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate referenceDate,
+            HttpServletRequest httpServletRequest
+    ) {
+        try {
+            authenticatedUserResolver.require(httpServletRequest);
+            LocalDate effectiveReferenceDate = referenceDate != null ? referenceDate : LocalDate.now();
+            BillPaymentNotificationRunResponse response = billPaymentNotificationScheduler.sendDueBillNotifications(effectiveReferenceDate);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(new NotificationErrorResponse(ex.getMessage()));
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new NotificationErrorResponse(ex.getMessage()));
+        }
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 }

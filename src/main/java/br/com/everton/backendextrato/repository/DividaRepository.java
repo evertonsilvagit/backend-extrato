@@ -12,4 +12,5 @@ public interface DividaRepository extends JpaRepository<Divida, Long> {
     List<Divida> findAllByUserEmailIgnoreCase(String userEmail);
     Optional<Divida> findByIdAndUserEmailIgnoreCase(Long id, String userEmail);
     boolean existsByIdAndUserEmailIgnoreCase(Long id, String userEmail);
+    boolean existsByCategoria_IdAndUserEmailIgnoreCase(Long categoriaId, String userEmail);
 }

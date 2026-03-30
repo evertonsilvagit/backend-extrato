@@ -1,5 +1,6 @@
 package br.com.everton.backendextrato.service;
 
+import br.com.everton.backendextrato.dto.BillPaymentNotificationRunResponse;
 import br.com.everton.backendextrato.dto.PushNotificationTestResponse;
 import br.com.everton.backendextrato.model.BillPaymentNotificationLog;
 import br.com.everton.backendextrato.model.Conta;
@@ -52,7 +53,7 @@ public class BillPaymentNotificationScheduler {
     }
 
     @Transactional
-    public void sendDueBillNotifications(LocalDate referenceDate) {
+    public BillPaymentNotificationRunResponse sendDueBillNotifications(LocalDate referenceDate) {
         Map<String, List<Conta>> dueBillsByUser = contaRepository.findAll().stream()
                 .filter(conta -> hasText(conta.getUserEmail()))
                 .filter(conta -> isBillActiveInMonth(conta, referenceDate))
@@ -61,13 +62,21 @@ public class BillPaymentNotificationScheduler {
 
         if (dueBillsByUser.isEmpty()) {
             log.debug("No due bills found for referenceDate={}", referenceDate);
-            return;
+            return new BillPaymentNotificationRunResponse(referenceDate, 0, 0, 0, 0, 0, 0, 0);
         }
+
+        int dueBillCount = dueBillsByUser.values().stream().mapToInt(List::size).sum();
+        int triggeredUserCount = 0;
+        int skippedAlreadySentCount = 0;
+        int usersWithoutSubscriptionsCount = 0;
+        int deliveredSubscriptionCount = 0;
+        int failedSubscriptionCount = 0;
 
         for (Map.Entry<String, List<Conta>> entry : dueBillsByUser.entrySet()) {
             String userEmail = entry.getKey();
             if (notificationLogRepository.existsByUserEmailIgnoreCaseAndReferenceDate(userEmail, referenceDate)) {
                 log.debug("Skipping bill push because a notification was already sent for userEmail={} on {}", userEmail, referenceDate);
+                skippedAlreadySentCount++;
                 continue;
             }
 
@@ -79,13 +88,31 @@ public class BillPaymentNotificationScheduler {
                     "/contas"
             );
 
-            if (result.targetCount() > 0) {
-                BillPaymentNotificationLog logEntry = new BillPaymentNotificationLog();
-                logEntry.setUserEmail(userEmail);
-                logEntry.setReferenceDate(referenceDate);
-                notificationLogRepository.save(logEntry);
+            if (result.targetCount() == 0) {
+                usersWithoutSubscriptionsCount++;
+                continue;
             }
+
+            triggeredUserCount++;
+            deliveredSubscriptionCount += result.deliveredCount();
+            failedSubscriptionCount += result.failedCount();
+
+            BillPaymentNotificationLog logEntry = new BillPaymentNotificationLog();
+            logEntry.setUserEmail(userEmail);
+            logEntry.setReferenceDate(referenceDate);
+            notificationLogRepository.save(logEntry);
         }
+
+        return new BillPaymentNotificationRunResponse(
+                referenceDate,
+                dueBillsByUser.size(),
+                dueBillCount,
+                triggeredUserCount,
+                skippedAlreadySentCount,
+                usersWithoutSubscriptionsCount,
+                deliveredSubscriptionCount,
+                failedSubscriptionCount
+        );
     }
 
     private boolean isBillActiveInMonth(Conta conta, LocalDate referenceDate) {

@@ -13,6 +13,6 @@ public record DividaDto(
         @JsonProperty("amount")
         BigDecimal valor,
 
-        @JsonProperty("group")
-        String grupo
+        @JsonProperty("category")
+        String categoria
 ) {}
