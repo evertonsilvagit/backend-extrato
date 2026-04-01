@@ -60,6 +60,29 @@ public class DividaController {
         }
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<?> atualizar(
+            @PathVariable Long id,
+            @RequestBody DividaDto dto,
+            @RequestParam(required = false) String ownerEmail,
+            HttpServletRequest httpServletRequest
+    ) {
+        try {
+            AuthenticatedUser user = authenticatedUserResolver.require(httpServletRequest);
+            String effectiveOwnerEmail = accessControlService.resolveWritableOwner(user.email(), ownerEmail);
+            DividaDto payload = new DividaDto(
+                    id,
+                    dto.descricao(),
+                    dto.valor(),
+                    dto.categoria(),
+                    dto.ordem()
+            );
+            return ResponseEntity.ok(service.salvar(effectiveOwnerEmail, payload));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new NotificationErrorResponse(e.getMessage()));
+        }
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> remover(
             @PathVariable Long id,

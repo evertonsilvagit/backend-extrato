@@ -81,6 +81,33 @@ public class EntradaController {
         }
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<?> atualizar(
+            @PathVariable Long id,
+            @RequestBody CreateEntradaRequest request,
+            @RequestParam(required = false) String ownerEmail,
+            HttpServletRequest httpServletRequest
+    ) {
+        try {
+            AuthenticatedUser user = authenticatedUserResolver.require(httpServletRequest);
+            String effectiveOwnerEmail = accessControlService.resolveWritableOwner(user.email(), ownerEmail);
+            CreateEntradaRequest payload = new CreateEntradaRequest(
+                    id,
+                    request.nome(),
+                    request.tipo(),
+                    request.valor(),
+                    request.taxaImposto(),
+                    request.diasRecebimento(),
+                    request.mesesVigencia(),
+                    request.ordem()
+            );
+            EntradaDto atualizado = service.criar(effectiveOwnerEmail, payload);
+            return ResponseEntity.ok(atualizado);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new NotificationErrorResponse(ex.getMessage()));
+        }
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> remover(
             @PathVariable Long id,

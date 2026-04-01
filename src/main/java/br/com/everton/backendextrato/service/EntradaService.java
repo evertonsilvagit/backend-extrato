@@ -28,24 +28,34 @@ public class EntradaService {
     public EntradaDto criar(String userEmail, CreateEntradaRequest req) {
         validar(req);
 
-        Entrada ent = new Entrada();
-        ent.setNome(req.nome());
-        ent.setTipo(req.tipo());
-        ent.setValor(req.valor());
-        ent.setTaxaImposto(req.taxaImposto());
+        Entrada entrada;
+        if (req.id() != null) {
+            entrada = entradaRepository.findByIdAndUserEmailIgnoreCase(req.id(), userEmail)
+                    .orElseThrow(() -> new IllegalArgumentException("Entrada nao encontrada para o usuario autenticado."));
+        } else {
+            entrada = new Entrada();
+        }
 
-        // meses de vigência
-        List<EntradaMes> meses = req.mesesVigencia().stream().map(m -> {
-            EntradaMes em = new EntradaMes();
-            em.setEntrada(ent);
-            em.setMes(m);
-            return em;
+        entrada.setNome(req.nome());
+        entrada.setTipo(req.tipo());
+        entrada.setValor(req.valor());
+        entrada.setTaxaImposto(req.taxaImposto());
+        entrada.setDiasRecebimento(req.diasRecebimento());
+        entrada.setOrdem(resolveOrder(userEmail, entrada, req.ordem()));
+
+        List<EntradaMes> meses = req.mesesVigencia().stream().map(month -> {
+            EntradaMes entryMonth = new EntradaMes();
+            entryMonth.setEntrada(entrada);
+            entryMonth.setMes(month);
+            return entryMonth;
         }).collect(Collectors.toList());
-        ent.setMeses(meses);
-        ent.setUserEmail(userEmail);
 
-        Entrada salvo = entradaRepository.save(ent);
-        return toDto(salvo);
+        entrada.getMeses().clear();
+        entrada.getMeses().addAll(meses);
+        entrada.setUserEmail(userEmail);
+
+        Entrada saved = entradaRepository.save(entrada);
+        return toDto(saved);
     }
 
     @Transactional(readOnly = true)
@@ -55,43 +65,82 @@ public class EntradaService {
 
     @Transactional(readOnly = true)
     public List<EntradaDto> listar(String userEmail, Integer page, Integer size) {
-        int p = page == null || page < 0 ? 0 : page;
-        int s = size == null || size <= 0 ? 20 : size;
-        Page<Entrada> pagina = entradaRepository.findAllByUserEmailIgnoreCase(userEmail, PageRequest.of(p, s));
-        return pagina.getContent().stream().map(this::toDto).collect(Collectors.toList());
+        int safePage = page == null || page < 0 ? 0 : page;
+        int safeSize = size == null || size <= 0 ? 20 : size;
+        Page<Entrada> pageResult = entradaRepository.findAllByUserEmailIgnoreCaseOrderByOrdemAscNomeAscIdAsc(userEmail, PageRequest.of(safePage, safeSize));
+        return pageResult.getContent().stream().map(this::toDto).collect(Collectors.toList());
     }
 
     @Transactional
     public boolean remover(String userEmail, Long id) {
         Optional<Entrada> entrada = entradaRepository.findByIdAndUserEmailIgnoreCase(id, userEmail);
-        if (entrada.isEmpty()) return false;
+        if (entrada.isEmpty()) {
+            return false;
+        }
+
         entradaRepository.delete(entrada.get());
         return true;
     }
 
-    private EntradaDto toDto(Entrada e) {
-        List<Integer> meses = e.getMeses().stream().map(EntradaMes::getMes).collect(Collectors.toList());
+    private EntradaDto toDto(Entrada entrada) {
+        List<Integer> months = entrada.getMeses().stream().map(EntradaMes::getMes).collect(Collectors.toList());
         return new EntradaDto(
-                e.getId(),
-                e.getNome(),
-                e.getTipo(),
-                e.getValor(),
-                e.getTaxaImposto(),
-                meses
+                entrada.getId(),
+                entrada.getNome(),
+                entrada.getTipo(),
+                entrada.getValor(),
+                entrada.getTaxaImposto(),
+                entrada.getDiasRecebimento(),
+                months,
+                entrada.getOrdem()
         );
     }
 
+    private Integer resolveOrder(String userEmail, Entrada entrada, Integer requestedOrder) {
+        if (requestedOrder != null) {
+            return requestedOrder;
+        }
+
+        if (entrada.getOrdem() != null) {
+            return entrada.getOrdem();
+        }
+
+        return entradaRepository.findTopByUserEmailIgnoreCaseOrderByOrdemDescIdDesc(userEmail)
+                .map(existing -> existing.getOrdem() + 1)
+                .orElse(1);
+    }
+
     private void validar(CreateEntradaRequest req) {
-        if (req == null) throw new IllegalArgumentException("payload obrigatório");
-        if (req.nome() == null || req.nome().isBlank()) throw new IllegalArgumentException("nome é obrigatório");
-        if (req.tipo() == null || req.tipo().isBlank()) throw new IllegalArgumentException("tipo é obrigatório");
-        if (req.valor() == null || req.valor().compareTo(BigDecimal.ZERO) <= 0)
+        if (req == null) {
+            throw new IllegalArgumentException("payload obrigatorio");
+        }
+        if (req.nome() == null || req.nome().isBlank()) {
+            throw new IllegalArgumentException("nome e obrigatorio");
+        }
+        if (req.tipo() == null || req.tipo().isBlank()) {
+            throw new IllegalArgumentException("tipo e obrigatorio");
+        }
+        if (req.valor() == null || req.valor().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("valor deve ser > 0");
-        if (req.taxaImposto() == null || req.taxaImposto().compareTo(BigDecimal.ZERO) < 0)
+        }
+        if (req.taxaImposto() == null || req.taxaImposto().compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("taxaImposto deve ser >= 0");
-        if (req.mesesVigencia() == null || req.mesesVigencia().isEmpty())
-            throw new IllegalArgumentException("mesesVigencia é obrigatório");
-        boolean mesesOk = req.mesesVigencia().stream().allMatch(m -> m != null && m >= 1 && m <= 12);
-        if (!mesesOk) throw new IllegalArgumentException("mesesVigencia deve conter valores entre 1 e 12");
+        }
+        if (req.diasRecebimento() != null) {
+            boolean validDays = req.diasRecebimento().stream().allMatch(day -> day != null && day >= 1 && day <= 31);
+            if (!validDays) {
+                throw new IllegalArgumentException("diasRecebimento deve conter valores entre 1 e 31");
+            }
+        }
+        if (req.mesesVigencia() == null || req.mesesVigencia().isEmpty()) {
+            throw new IllegalArgumentException("mesesVigencia e obrigatorio");
+        }
+        boolean validMonths = req.mesesVigencia().stream().allMatch(month -> month != null && month >= 1 && month <= 12);
+        if (!validMonths) {
+            throw new IllegalArgumentException("mesesVigencia deve conter valores entre 1 e 12");
+        }
+        if (req.ordem() != null && req.ordem() < 1) {
+            throw new IllegalArgumentException("ordem deve ser >= 1");
+        }
     }
 }

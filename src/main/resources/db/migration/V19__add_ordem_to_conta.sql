@@ -1,0 +1,7 @@
+ALTER TABLE conta ADD COLUMN ordem INT;
+
+UPDATE conta
+SET ordem = id
+WHERE ordem IS NULL;
+
+ALTER TABLE conta ALTER COLUMN ordem SET NOT NULL;

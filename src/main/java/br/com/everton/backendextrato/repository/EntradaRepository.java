@@ -9,6 +9,7 @@ import java.util.Optional;
 
 public interface EntradaRepository extends JpaRepository<Entrada, Long> {
     Optional<Entrada> findByIdAndUserEmailIgnoreCase(Long id, String userEmail);
-    Page<Entrada> findAllByUserEmailIgnoreCase(String userEmail, Pageable pageable);
+    Page<Entrada> findAllByUserEmailIgnoreCaseOrderByOrdemAscNomeAscIdAsc(String userEmail, Pageable pageable);
+    Optional<Entrada> findTopByUserEmailIgnoreCaseOrderByOrdemDescIdDesc(String userEmail);
     boolean existsByIdAndUserEmailIgnoreCase(Long id, String userEmail);
 }

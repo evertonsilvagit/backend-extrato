@@ -9,5 +9,6 @@ public record ContaDto(
         BigDecimal valor,
         Integer diaPagamento,
         String categoria,
-        List<Integer> mesesVigencia
+        List<Integer> mesesVigencia,
+        Integer ordem
 ) {}

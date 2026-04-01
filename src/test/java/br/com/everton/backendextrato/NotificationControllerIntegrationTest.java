@@ -2,7 +2,9 @@ package br.com.everton.backendextrato;
 
 import br.com.everton.backendextrato.auth.AuthTokenFilter;
 import br.com.everton.backendextrato.auth.AuthenticatedUser;
+import br.com.everton.backendextrato.model.MobilePushSubscription;
 import br.com.everton.backendextrato.model.PushSubscription;
+import br.com.everton.backendextrato.repository.MobilePushSubscriptionRepository;
 import br.com.everton.backendextrato.repository.PushSubscriptionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,10 +44,14 @@ class NotificationControllerIntegrationTest {
     @Autowired
     private PushSubscriptionRepository repository;
 
+    @Autowired
+    private MobilePushSubscriptionRepository mobileRepository;
+
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
         repository.deleteAll();
+        mobileRepository.deleteAll();
     }
 
     @Test
@@ -123,6 +129,91 @@ class NotificationControllerIntegrationTest {
         assertThat(repository.count()).isZero();
 
         mockMvc.perform(delete("/api/notificacoes/subscriptions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void shouldRegisterAndReregisterMobileSubscriptionWithoutDuplicatingToken() throws Exception {
+        String payload = """
+                {
+                  "expoPushToken": "ExponentPushToken[abc123]",
+                  "platform": "android",
+                  "deviceName": "Pixel",
+                  "appVersion": "1.0.0"
+                }
+                """;
+
+        mockMvc.perform(post("/api/notificacoes/mobile/subscriptions")
+                        .requestAttr(
+                                AuthTokenFilter.AUTHENTICATED_USER_ATTRIBUTE,
+                                new AuthenticatedUser(1L, "user@example.com", "Everton")
+                        )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isCreated())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"created\":true")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"platform\":\"android\"")));
+
+        String updatedPayload = """
+                {
+                  "expoPushToken": "ExponentPushToken[abc123]",
+                  "platform": "android",
+                  "deviceName": "Pixel 9",
+                  "appVersion": "1.0.1"
+                }
+                """;
+
+        mockMvc.perform(post("/api/notificacoes/mobile/subscriptions")
+                        .requestAttr(
+                                AuthTokenFilter.AUTHENTICATED_USER_ATTRIBUTE,
+                                new AuthenticatedUser(1L, "updated@example.com", "Evert")
+                        )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(updatedPayload))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"created\":false")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"userEmail\":\"updated@example.com\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"deviceName\":\"Pixel 9\"")));
+
+        assertThat(mobileRepository.count()).isEqualTo(1);
+        MobilePushSubscription saved = mobileRepository.findAll().get(0);
+        assertThat(saved.getAppVersion()).isEqualTo("1.0.1");
+        assertThat(saved.getDeviceName()).isEqualTo("Pixel 9");
+    }
+
+    @Test
+    void shouldRemoveMobileSubscriptionIdempotently() throws Exception {
+        MobilePushSubscription subscription = new MobilePushSubscription();
+        subscription.setExpoPushToken("ExponentPushToken[remove-me]");
+        subscription.setPlatform("android");
+        subscription.setUserEmail("user@example.com");
+        subscription.setUserName("User");
+        mobileRepository.save(subscription);
+
+        String payload = """
+                {
+                  "expoPushToken": "ExponentPushToken[remove-me]"
+                }
+                """;
+
+        mockMvc.perform(delete("/api/notificacoes/mobile/subscriptions")
+                        .requestAttr(
+                                AuthTokenFilter.AUTHENTICATED_USER_ATTRIBUTE,
+                                new AuthenticatedUser(1L, "user@example.com", "Everton")
+                        )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isNoContent());
+
+        assertThat(mobileRepository.count()).isZero();
+
+        mockMvc.perform(delete("/api/notificacoes/mobile/subscriptions")
+                        .requestAttr(
+                                AuthTokenFilter.AUTHENTICATED_USER_ATTRIBUTE,
+                                new AuthenticatedUser(1L, "user@example.com", "Everton")
+                        )
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isNoContent());

@@ -1,0 +1,32 @@
+package br.com.everton.backendextrato.dto;
+
+public record CompanyProfileDto(
+        String legalName,
+        String tradeName,
+        String cnpj,
+        String taxRegime,
+        String activity,
+        String stateRegistration,
+        String municipalRegistration,
+        String openingDate,
+        String businessPhone,
+        String businessEmail,
+        String website,
+        String contactName,
+        String zipCode,
+        String street,
+        String number,
+        String complement,
+        String district,
+        String city,
+        String state,
+        String invoiceEmail,
+        String pixKey,
+        String mainBank,
+        String billingNotes,
+        String accountantName,
+        String accountantEmail,
+        String accountantPhone,
+        String payrollNotes,
+        String operationNotes
+) {}

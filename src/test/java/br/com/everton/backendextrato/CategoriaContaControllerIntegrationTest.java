@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -77,7 +78,8 @@ class CategoriaContaControllerIntegrationTest {
                   "valor": 2200.00,
                   "diaPagamento": 5,
                   "categoria": "Moradia",
-                  "mesesVigencia": [1,2,3]
+                  "mesesVigencia": [1,2,3],
+                  "ordem": 1
                 }
                 """;
 
@@ -92,7 +94,46 @@ class CategoriaContaControllerIntegrationTest {
                         .requestAttr(AuthTokenFilter.AUTHENTICATED_USER_ATTRIBUTE, new AuthenticatedUser(1L, "user@example.com", "User")))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("\"descricao\":\"Aluguel\"")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"categoria\":\"Moradia\"")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"categoria\":\"Moradia\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"ordem\":1")));
+    }
+
+    @Test
+    void shouldUpdateBillIncludingOrder() throws Exception {
+        CategoriaConta categoria = new CategoriaConta();
+        categoria.setNome("Moradia");
+        categoria.setUserEmail("user@example.com");
+        categoria = categoriaRepository.save(categoria);
+
+        Conta conta = new Conta();
+        conta.setDescricao("Internet");
+        conta.setValor(new BigDecimal("120.00"));
+        conta.setDiaPagamento(10);
+        conta.setCategoria(categoria);
+        conta.setUserEmail("user@example.com");
+        conta.setMesesVigencia(List.of(1, 2, 3));
+        conta.setOrdem(2);
+        conta = contaRepository.save(conta);
+
+        String payload = """
+                {
+                  "descricao": "Internet fibra",
+                  "valor": 150.00,
+                  "diaPagamento": 12,
+                  "categoria": "Moradia",
+                  "mesesVigencia": [1,2,3,4],
+                  "ordem": 7
+                }
+                """;
+
+        mockMvc.perform(put("/api/contas/" + conta.getId())
+                        .requestAttr(AuthTokenFilter.AUTHENTICATED_USER_ATTRIBUTE, new AuthenticatedUser(1L, "user@example.com", "User"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"descricao\":\"Internet fibra\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"diaPagamento\":12")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"ordem\":7")));
     }
 
     @Test
@@ -154,6 +195,7 @@ class CategoriaContaControllerIntegrationTest {
         conta.setCategoria(categoria);
         conta.setUserEmail("user@example.com");
         conta.setMesesVigencia(List.of(1, 2, 3));
+        conta.setOrdem(1);
         contaRepository.save(conta);
 
         mockMvc.perform(delete("/api/categorias-conta/" + categoria.getId())

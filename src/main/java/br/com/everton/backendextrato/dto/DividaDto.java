@@ -14,5 +14,8 @@ public record DividaDto(
         BigDecimal valor,
 
         @JsonProperty("category")
-        String categoria
+        String categoria,
+
+        @JsonProperty("sortOrder")
+        Integer ordem
 ) {}

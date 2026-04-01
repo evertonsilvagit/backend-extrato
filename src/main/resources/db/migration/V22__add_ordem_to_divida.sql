@@ -1,0 +1,7 @@
+ALTER TABLE divida ADD COLUMN ordem INT;
+
+UPDATE divida
+SET ordem = id
+WHERE ordem IS NULL;
+
+ALTER TABLE divida ALTER COLUMN ordem SET NOT NULL;

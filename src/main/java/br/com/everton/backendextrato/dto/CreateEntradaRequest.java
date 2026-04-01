@@ -4,9 +4,12 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public record CreateEntradaRequest(
+        Long id,
         String nome,
         String tipo,
         BigDecimal valor,
         BigDecimal taxaImposto,
-        List<Integer> mesesVigencia
+        List<Integer> diasRecebimento,
+        List<Integer> mesesVigencia,
+        Integer ordem
 ) {}

@@ -54,13 +54,14 @@ public class PushNotificationService {
     @Transactional
     public PushNotificationTestResponse sendToUser(String userEmail, String title, String body, String url) {
         validatePayload(title, body);
-        ensureConfigured();
 
         List<PushSubscription> targets = findTargets(userEmail);
         if (targets.isEmpty()) {
             log.info("Push requested but no subscriptions matched userEmail={}", sanitize(userEmail));
             return new PushNotificationTestResponse(0, 0, 0, 0);
         }
+
+        ensureConfigured();
 
         String payload = buildPayload(title, body, url);
         PushService pushService = buildPushService();

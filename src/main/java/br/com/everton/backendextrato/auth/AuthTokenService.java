@@ -10,6 +10,8 @@ import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.keys.HmacKey;
 import org.springframework.stereotype.Service;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.nio.charset.StandardCharsets;
 
 @Service
@@ -20,7 +22,7 @@ public class AuthTokenService {
 
     public AuthTokenService(AuthProperties authProperties) {
         this.authProperties = authProperties;
-        this.hmacKey = new HmacKey(authProperties.secret().getBytes(StandardCharsets.UTF_8));
+        this.hmacKey = new HmacKey(deriveSigningKey(authProperties.secret()));
     }
 
     public String generateToken(AuthenticatedUser user) {
@@ -62,6 +64,19 @@ public class AuthTokenService {
             throw new IllegalArgumentException("Token inválido.", ex);
         } catch (Exception ex) {
             throw new IllegalStateException("Falha ao validar token.", ex);
+        }
+    }
+
+    private byte[] deriveSigningKey(String secret) {
+        String normalizedSecret = secret == null || secret.isBlank()
+                ? "backend-extrato-local-dev-secret-change-me"
+                : secret;
+
+        try {
+            return MessageDigest.getInstance("SHA-256")
+                    .digest(normalizedSecret.getBytes(StandardCharsets.UTF_8));
+        } catch (NoSuchAlgorithmException ex) {
+            throw new IllegalStateException("Falha ao preparar a chave de autenticação.", ex);
         }
     }
 }

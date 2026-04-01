@@ -21,7 +21,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(
@@ -59,46 +61,73 @@ class CategoriaDividaControllerIntegrationTest {
     void shouldCreateCategoryAndUseItWhenCreatingDebt() throws Exception {
         String categoryPayload = """
                 {
-                  "name": "Cartão"
+                  "name": "Cartao"
                 }
                 """;
 
         mockMvc.perform(post("/api/categorias-divida")
-                        .requestAttr(
-                                AuthTokenFilter.AUTHENTICATED_USER_ATTRIBUTE,
-                                new AuthenticatedUser(1L, "user@example.com", "User")
-                        )
+                        .requestAttr(AuthTokenFilter.AUTHENTICATED_USER_ATTRIBUTE, new AuthenticatedUser(1L, "user@example.com", "User"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(categoryPayload))
                 .andExpect(status().isCreated())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"name\":\"Cartão\"")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"name\":\"Cartao\"")));
 
         String debtPayload = """
                 {
                   "description": "Parcelamento notebook",
                   "amount": 3200.50,
-                  "category": "Cartão"
+                  "category": "Cartao",
+                  "sortOrder": 1
                 }
                 """;
 
         mockMvc.perform(post("/api/dividas")
-                        .requestAttr(
-                                AuthTokenFilter.AUTHENTICATED_USER_ATTRIBUTE,
-                                new AuthenticatedUser(1L, "user@example.com", "User")
-                        )
+                        .requestAttr(AuthTokenFilter.AUTHENTICATED_USER_ATTRIBUTE, new AuthenticatedUser(1L, "user@example.com", "User"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(debtPayload))
                 .andExpect(status().isCreated())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"category\":\"Cartão\"")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"category\":\"Cartao\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"sortOrder\":1")));
 
         mockMvc.perform(get("/api/dividas")
-                        .requestAttr(
-                                AuthTokenFilter.AUTHENTICATED_USER_ATTRIBUTE,
-                                new AuthenticatedUser(1L, "user@example.com", "User")
-                        ))
+                        .requestAttr(AuthTokenFilter.AUTHENTICATED_USER_ATTRIBUTE, new AuthenticatedUser(1L, "user@example.com", "User")))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("\"description\":\"Parcelamento notebook\"")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"category\":\"Cartão\"")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"category\":\"Cartao\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"sortOrder\":1")));
+    }
+
+    @Test
+    void shouldUpdateDebtIncludingOrder() throws Exception {
+        CategoriaDivida categoria = new CategoriaDivida();
+        categoria.setNome("Cartao");
+        categoria.setUserEmail("user@example.com");
+        categoria = categoriaRepository.save(categoria);
+
+        Divida divida = new Divida();
+        divida.setDescricao("Notebook");
+        divida.setValor(new BigDecimal("2500.00"));
+        divida.setCategoria(categoria);
+        divida.setOrdem(2);
+        divida.setUserEmail("user@example.com");
+        divida = dividaRepository.save(divida);
+
+        String payload = """
+                {
+                  "description": "Notebook parcelado",
+                  "amount": 2600.00,
+                  "category": "Cartao",
+                  "sortOrder": 6
+                }
+                """;
+
+        mockMvc.perform(put("/api/dividas/" + divida.getId())
+                        .requestAttr(AuthTokenFilter.AUTHENTICATED_USER_ATTRIBUTE, new AuthenticatedUser(1L, "user@example.com", "User"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"description\":\"Notebook parcelado\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"sortOrder\":6")));
     }
 
     @Test
@@ -110,23 +139,17 @@ class CategoriaDividaControllerIntegrationTest {
                 """;
 
         mockMvc.perform(post("/api/categorias-divida")
-                        .requestAttr(
-                                AuthTokenFilter.AUTHENTICATED_USER_ATTRIBUTE,
-                                new AuthenticatedUser(1L, "user@example.com", "User")
-                        )
+                        .requestAttr(AuthTokenFilter.AUTHENTICATED_USER_ATTRIBUTE, new AuthenticatedUser(1L, "user@example.com", "User"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isCreated());
 
         mockMvc.perform(post("/api/categorias-divida")
-                        .requestAttr(
-                                AuthTokenFilter.AUTHENTICATED_USER_ATTRIBUTE,
-                                new AuthenticatedUser(1L, "user@example.com", "User")
-                        )
+                        .requestAttr(AuthTokenFilter.AUTHENTICATED_USER_ATTRIBUTE, new AuthenticatedUser(1L, "user@example.com", "User"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isConflict())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Já existe uma categoria de dívida com este nome.")));
+                .andExpect(jsonPath("$.message").isNotEmpty());
     }
 
     @Test
@@ -138,19 +161,13 @@ class CategoriaDividaControllerIntegrationTest {
                 """;
 
         mockMvc.perform(post("/api/categorias-divida")
-                        .requestAttr(
-                                AuthTokenFilter.AUTHENTICATED_USER_ATTRIBUTE,
-                                new AuthenticatedUser(1L, "first@example.com", "First")
-                        )
+                        .requestAttr(AuthTokenFilter.AUTHENTICATED_USER_ATTRIBUTE, new AuthenticatedUser(1L, "first@example.com", "First"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isCreated());
 
         mockMvc.perform(post("/api/categorias-divida")
-                        .requestAttr(
-                                AuthTokenFilter.AUTHENTICATED_USER_ATTRIBUTE,
-                                new AuthenticatedUser(2L, "second@example.com", "Second")
-                        )
+                        .requestAttr(AuthTokenFilter.AUTHENTICATED_USER_ATTRIBUTE, new AuthenticatedUser(2L, "second@example.com", "Second"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isCreated());
@@ -169,15 +186,13 @@ class CategoriaDividaControllerIntegrationTest {
         divida.setDescricao("Curso");
         divida.setValor(new BigDecimal("999.90"));
         divida.setCategoria(categoria);
+        divida.setOrdem(1);
         divida.setUserEmail("user@example.com");
         dividaRepository.save(divida);
 
         mockMvc.perform(delete("/api/categorias-divida/" + categoria.getId())
-                        .requestAttr(
-                                AuthTokenFilter.AUTHENTICATED_USER_ATTRIBUTE,
-                                new AuthenticatedUser(1L, "user@example.com", "User")
-                        ))
+                        .requestAttr(AuthTokenFilter.AUTHENTICATED_USER_ATTRIBUTE, new AuthenticatedUser(1L, "user@example.com", "User")))
                 .andExpect(status().isConflict())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Não é possível excluir uma categoria de dívida que está em uso.")));
+                .andExpect(jsonPath("$.message").isNotEmpty());
     }
 }

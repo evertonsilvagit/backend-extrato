@@ -78,6 +78,32 @@ public class ContaController {
         }
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<?> atualizar(
+            @PathVariable Long id,
+            @RequestBody ContaDto request,
+            @RequestParam(required = false) String ownerEmail,
+            HttpServletRequest httpServletRequest
+    ) {
+        try {
+            AuthenticatedUser user = authenticatedUserResolver.require(httpServletRequest);
+            String effectiveOwnerEmail = accessControlService.resolveWritableOwner(user.email(), ownerEmail);
+            ContaDto payload = new ContaDto(
+                    id,
+                    request.descricao(),
+                    request.valor(),
+                    request.diaPagamento(),
+                    request.categoria(),
+                    request.mesesVigencia(),
+                    request.ordem()
+            );
+            ContaDto atualizado = service.criar(effectiveOwnerEmail, payload);
+            return ResponseEntity.ok(atualizado);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new NotificationErrorResponse(ex.getMessage()));
+        }
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> remover(
             @PathVariable Long id,

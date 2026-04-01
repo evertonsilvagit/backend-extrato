@@ -28,18 +28,18 @@ public class BillPaymentNotificationScheduler {
     private static final Locale LOCALE_PT_BR = Locale.forLanguageTag("pt-BR");
 
     private final ContaRepository contaRepository;
-    private final PushNotificationService pushNotificationService;
+    private final NotificationDeliveryService notificationDeliveryService;
     private final BillPaymentNotificationLogRepository notificationLogRepository;
     private final ZoneId notificationZone;
 
     public BillPaymentNotificationScheduler(
             ContaRepository contaRepository,
-            PushNotificationService pushNotificationService,
+            NotificationDeliveryService notificationDeliveryService,
             BillPaymentNotificationLogRepository notificationLogRepository,
             @Value("${notifications.bill-payment.zone:America/Sao_Paulo}") String notificationZone
     ) {
         this.contaRepository = contaRepository;
-        this.pushNotificationService = pushNotificationService;
+        this.notificationDeliveryService = notificationDeliveryService;
         this.notificationLogRepository = notificationLogRepository;
         this.notificationZone = ZoneId.of(notificationZone);
     }
@@ -81,7 +81,7 @@ public class BillPaymentNotificationScheduler {
             }
 
             List<Conta> dueBills = entry.getValue();
-            PushNotificationTestResponse result = pushNotificationService.sendToUser(
+            PushNotificationTestResponse result = notificationDeliveryService.sendToUser(
                     userEmail,
                     buildTitle(dueBills),
                     buildBody(dueBills, referenceDate),

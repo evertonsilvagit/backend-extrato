@@ -29,7 +29,7 @@ class BillPaymentNotificationSchedulerTest {
     private ContaRepository contaRepository;
 
     @Mock
-    private PushNotificationService pushNotificationService;
+    private NotificationDeliveryService notificationDeliveryService;
 
     @Mock
     private BillPaymentNotificationLogRepository notificationLogRepository;
@@ -40,7 +40,7 @@ class BillPaymentNotificationSchedulerTest {
     void setUp() {
         scheduler = new BillPaymentNotificationScheduler(
                 contaRepository,
-                pushNotificationService,
+                notificationDeliveryService,
                 notificationLogRepository,
                 "America/Sao_Paulo"
         );
@@ -58,14 +58,14 @@ class BillPaymentNotificationSchedulerTest {
         ));
         when(notificationLogRepository.existsByUserEmailIgnoreCaseAndReferenceDate("user@example.com", referenceDate))
                 .thenReturn(false);
-        when(pushNotificationService.sendToUser(eq("user@example.com"), any(), any(), eq("/contas")))
+        when(notificationDeliveryService.sendToUser(eq("user@example.com"), any(), any(), eq("/contas")))
                 .thenReturn(new PushNotificationTestResponse(1, 1, 0, 0));
 
         BillPaymentNotificationRunResponse response = scheduler.sendDueBillNotifications(referenceDate);
 
         ArgumentCaptor<String> titleCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> bodyCaptor = ArgumentCaptor.forClass(String.class);
-        verify(pushNotificationService).sendToUser(eq("user@example.com"), titleCaptor.capture(), bodyCaptor.capture(), eq("/contas"));
+        verify(notificationDeliveryService).sendToUser(eq("user@example.com"), titleCaptor.capture(), bodyCaptor.capture(), eq("/contas"));
         verify(notificationLogRepository).save(any());
 
         assertThat(titleCaptor.getValue()).isEqualTo("Contas para pagar hoje");
@@ -93,7 +93,7 @@ class BillPaymentNotificationSchedulerTest {
 
         BillPaymentNotificationRunResponse response = scheduler.sendDueBillNotifications(referenceDate);
 
-        verify(pushNotificationService, never()).sendToUser(any(), any(), any(), any());
+        verify(notificationDeliveryService, never()).sendToUser(any(), any(), any(), any());
         verify(notificationLogRepository, never()).save(any());
         assertThat(response.referenceDate()).isEqualTo(referenceDate);
         assertThat(response.dueUserCount()).isEqualTo(1);
@@ -110,6 +110,7 @@ class BillPaymentNotificationSchedulerTest {
         conta.setUserEmail(userEmail);
         conta.setDescricao(descricao);
         conta.setDiaPagamento(diaPagamento);
+        conta.setOrdem(1);
         conta.setMesesVigencia(mesesVigencia);
         conta.setValor(new BigDecimal(valor));
         return conta;

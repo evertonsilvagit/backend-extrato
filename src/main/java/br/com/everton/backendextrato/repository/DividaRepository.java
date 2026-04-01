@@ -9,8 +9,9 @@ import java.util.Optional;
 
 @Repository
 public interface DividaRepository extends JpaRepository<Divida, Long> {
-    List<Divida> findAllByUserEmailIgnoreCase(String userEmail);
+    List<Divida> findAllByUserEmailIgnoreCaseOrderByOrdemAscDescricaoAscIdAsc(String userEmail);
     Optional<Divida> findByIdAndUserEmailIgnoreCase(Long id, String userEmail);
+    Optional<Divida> findTopByUserEmailIgnoreCaseOrderByOrdemDescIdDesc(String userEmail);
     boolean existsByIdAndUserEmailIgnoreCase(Long id, String userEmail);
     boolean existsByCategoria_IdAndUserEmailIgnoreCase(Long categoriaId, String userEmail);
 }

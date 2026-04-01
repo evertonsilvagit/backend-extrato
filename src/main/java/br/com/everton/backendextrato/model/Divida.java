@@ -30,6 +30,9 @@ public class Divida {
     @JoinColumn(name = "categoria_divida_id", nullable = false)
     private CategoriaDivida categoria;
 
+    @Column(name = "ordem", nullable = false)
+    private Integer ordem;
+
     @Column(name = "user_email")
     private String userEmail;
 
@@ -44,6 +47,9 @@ public class Divida {
 
     public CategoriaDivida getCategoria() { return categoria; }
     public void setCategoria(CategoriaDivida categoria) { this.categoria = categoria; }
+
+    public Integer getOrdem() { return ordem; }
+    public void setOrdem(Integer ordem) { this.ordem = ordem; }
 
     public String getUserEmail() { return userEmail; }
     public void setUserEmail(String userEmail) { this.userEmail = userEmail; }

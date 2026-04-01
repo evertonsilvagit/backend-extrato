@@ -9,8 +9,9 @@ import java.util.Optional;
 
 @Repository
 public interface ContaRepository extends JpaRepository<Conta, Long> {
-    List<Conta> findAllByUserEmailIgnoreCase(String userEmail);
+    List<Conta> findAllByUserEmailIgnoreCaseOrderByOrdemAscDescricaoAscIdAsc(String userEmail);
     Optional<Conta> findByIdAndUserEmailIgnoreCase(Long id, String userEmail);
+    Optional<Conta> findTopByUserEmailIgnoreCaseOrderByOrdemDescIdDesc(String userEmail);
     boolean existsByIdAndUserEmailIgnoreCase(Long id, String userEmail);
     boolean existsByCategoria_IdAndUserEmailIgnoreCase(Long categoriaId, String userEmail);
 }

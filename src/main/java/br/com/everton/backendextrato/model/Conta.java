@@ -25,6 +25,9 @@ public class Conta {
     @Column(name = "dia_pagamento", nullable = false)
     private Integer diaPagamento;
 
+    @Column(name = "ordem", nullable = false)
+    private Integer ordem;
+
     @Column(name = "meses_vigencia")
     private String mesesVigenciaRaw;
 
@@ -39,12 +42,14 @@ public class Conta {
     public String getDescricao() { return descricao; }
     public BigDecimal getValor() { return valor; }
     public Integer getDiaPagamento() { return diaPagamento; }
+    public Integer getOrdem() { return ordem; }
     public CategoriaConta getCategoria() { return categoria; }
     public String getUserEmail() { return userEmail; }
 
     public void setDescricao(String descricao) { this.descricao = descricao; }
     public void setValor(BigDecimal valor) { this.valor = valor; }
     public void setDiaPagamento(Integer diaPagamento) { this.diaPagamento = diaPagamento; }
+    public void setOrdem(Integer ordem) { this.ordem = ordem; }
     public void setCategoria(CategoriaConta categoria) { this.categoria = categoria; }
     public void setUserEmail(String userEmail) { this.userEmail = userEmail; }
 
