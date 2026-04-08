@@ -10,6 +10,8 @@ public record EntradaDto(
         BigDecimal valor,
         BigDecimal taxaImposto,
         List<Integer> diasRecebimento,
+        Boolean valorLiquido,
+        String categoriaRecebimento,
         List<Integer> mesesVigencia,
         Integer ordem
 ) {}

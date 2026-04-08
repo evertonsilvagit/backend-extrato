@@ -17,6 +17,11 @@ import java.util.stream.Collectors;
 
 @Service
 public class EntradaService {
+    private static final List<String> CATEGORIAS_RECEBIMENTO_VALIDAS = List.of(
+            "STANDARD",
+            "SALARY_ADVANCE",
+            "SALARY_SETTLEMENT"
+    );
 
     private final EntradaRepository entradaRepository;
 
@@ -41,6 +46,8 @@ public class EntradaService {
         entrada.setValor(req.valor());
         entrada.setTaxaImposto(req.taxaImposto());
         entrada.setDiasRecebimento(req.diasRecebimento());
+        entrada.setValorLiquido(Boolean.TRUE.equals(req.valorLiquido()));
+        entrada.setCategoriaRecebimento(normalizeCategoriaRecebimento(req.categoriaRecebimento()));
         entrada.setOrdem(resolveOrder(userEmail, entrada, req.ordem()));
 
         List<EntradaMes> meses = req.mesesVigencia().stream().map(month -> {
@@ -91,6 +98,8 @@ public class EntradaService {
                 entrada.getValor(),
                 entrada.getTaxaImposto(),
                 entrada.getDiasRecebimento(),
+                Boolean.TRUE.equals(entrada.getValorLiquido()),
+                normalizeCategoriaRecebimento(entrada.getCategoriaRecebimento()),
                 months,
                 entrada.getOrdem()
         );
@@ -132,6 +141,10 @@ public class EntradaService {
                 throw new IllegalArgumentException("diasRecebimento deve conter valores entre 1 e 31");
             }
         }
+        String categoriaRecebimento = normalizeCategoriaRecebimento(req.categoriaRecebimento());
+        if (!CATEGORIAS_RECEBIMENTO_VALIDAS.contains(categoriaRecebimento)) {
+            throw new IllegalArgumentException("categoriaRecebimento invalida");
+        }
         if (req.mesesVigencia() == null || req.mesesVigencia().isEmpty()) {
             throw new IllegalArgumentException("mesesVigencia e obrigatorio");
         }
@@ -142,5 +155,13 @@ public class EntradaService {
         if (req.ordem() != null && req.ordem() < 1) {
             throw new IllegalArgumentException("ordem deve ser >= 1");
         }
+    }
+
+    private String normalizeCategoriaRecebimento(String categoriaRecebimento) {
+        if (categoriaRecebimento == null || categoriaRecebimento.isBlank()) {
+            return "STANDARD";
+        }
+
+        return categoriaRecebimento.trim().toUpperCase();
     }
 }

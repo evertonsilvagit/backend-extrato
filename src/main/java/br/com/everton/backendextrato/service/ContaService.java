@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,9 +29,13 @@ public class ContaService {
         validar(req);
 
         Conta conta;
+        Long previousCategoryId = null;
+        Integer previousOrder = null;
         if (req.id() != null) {
             conta = contaRepository.findByIdAndUserEmailIgnoreCase(req.id(), userEmail)
                     .orElseThrow(() -> new IllegalArgumentException("Conta nao encontrada para o usuario autenticado."));
+            previousCategoryId = conta.getCategoria() != null ? conta.getCategoria().getId() : null;
+            previousOrder = conta.getOrdem();
         } else {
             conta = new Conta();
         }
@@ -41,12 +46,18 @@ public class ContaService {
         conta.setDescricao(req.descricao().trim());
         conta.setValor(req.valor());
         conta.setDiaPagamento(req.diaPagamento());
-        conta.setOrdem(resolveOrder(userEmail, conta, req.ordem()));
         conta.setCategoria(categoria);
         conta.setMesesVigencia(req.mesesVigencia());
         conta.setUserEmail(userEmail);
+        conta.setOrdem(resolveOrder(userEmail, categoria.getId(), conta.getId(), req.ordem(), previousCategoryId, previousOrder));
 
         Conta salvo = contaRepository.save(conta);
+        normalizeCategoryOrders(userEmail, categoria.getId(), salvo.getId(), salvo.getOrdem());
+
+        if (previousCategoryId != null && !previousCategoryId.equals(categoria.getId())) {
+            normalizeCategoryOrders(userEmail, previousCategoryId, null, null);
+        }
+
         return toDto(salvo);
     }
 
@@ -69,7 +80,11 @@ public class ContaService {
             return false;
         }
 
+        Long categoryId = conta.get().getCategoria() != null ? conta.get().getCategoria().getId() : null;
         contaRepository.delete(conta.get());
+        if (categoryId != null) {
+            normalizeCategoryOrders(userEmail, categoryId, null, null);
+        }
         return true;
     }
 
@@ -85,18 +100,66 @@ public class ContaService {
         );
     }
 
-    private Integer resolveOrder(String userEmail, Conta conta, Integer requestedOrder) {
+    private Integer resolveOrder(
+            String userEmail,
+            Long categoriaId,
+            Long contaId,
+            Integer requestedOrder,
+            Long previousCategoryId,
+            Integer previousOrder
+    ) {
+        List<Conta> categoryBills = new ArrayList<>(contaRepository.findAllByUserEmailIgnoreCaseAndCategoria_IdOrderByOrdemAscIdAsc(userEmail, categoriaId));
+        categoryBills.removeIf(existing -> contaId != null && contaId.equals(existing.getId()));
+
         if (requestedOrder != null) {
-            return requestedOrder;
+            return clampOrder(requestedOrder, categoryBills.size() + 1);
         }
 
-        if (conta.getOrdem() != null) {
-            return conta.getOrdem();
+        if (previousOrder != null && previousCategoryId != null && previousCategoryId.equals(categoriaId)) {
+            return clampOrder(previousOrder, categoryBills.size() + 1);
         }
 
-        return contaRepository.findTopByUserEmailIgnoreCaseOrderByOrdemDescIdDesc(userEmail)
-                .map(existing -> existing.getOrdem() + 1)
-                .orElse(1);
+        return categoryBills.size() + 1;
+    }
+
+    private void normalizeCategoryOrders(String userEmail, Long categoriaId, Long prioritizedContaId, Integer prioritizedOrder) {
+        List<Conta> categoryBills = new ArrayList<>(contaRepository.findAllByUserEmailIgnoreCaseAndCategoria_IdOrderByOrdemAscIdAsc(userEmail, categoriaId));
+
+        if (prioritizedContaId != null && prioritizedOrder != null) {
+            Conta prioritized = null;
+            for (Conta existing : categoryBills) {
+                if (prioritizedContaId.equals(existing.getId())) {
+                    prioritized = existing;
+                    break;
+                }
+            }
+
+            if (prioritized != null) {
+                categoryBills.remove(prioritized);
+                categoryBills.add(clampOrder(prioritizedOrder, categoryBills.size() + 1) - 1, prioritized);
+            }
+        }
+
+        boolean changed = false;
+        for (int index = 0; index < categoryBills.size(); index++) {
+            int expectedOrder = index + 1;
+            Conta existing = categoryBills.get(index);
+            if (!Integer.valueOf(expectedOrder).equals(existing.getOrdem())) {
+                existing.setOrdem(expectedOrder);
+                changed = true;
+            }
+        }
+
+        if (changed) {
+            contaRepository.saveAll(categoryBills);
+        }
+    }
+
+    private Integer clampOrder(Integer requestedOrder, int maxOrder) {
+        if (requestedOrder == null) {
+            return maxOrder;
+        }
+        return Math.max(1, Math.min(requestedOrder, maxOrder));
     }
 
     private void validar(ContaDto req) {

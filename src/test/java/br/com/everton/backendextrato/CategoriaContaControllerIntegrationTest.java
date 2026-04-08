@@ -133,7 +133,7 @@ class CategoriaContaControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("\"descricao\":\"Internet fibra\"")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("\"diaPagamento\":12")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"ordem\":7")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"ordem\":1")));
     }
 
     @Test

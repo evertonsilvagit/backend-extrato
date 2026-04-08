@@ -33,6 +33,12 @@ public class Entrada {
     @Column(name = "ordem", nullable = false)
     private Integer ordem;
 
+    @Column(name = "valor_liquido", nullable = false)
+    private Boolean valorLiquido = Boolean.FALSE;
+
+    @Column(name = "categoria_recebimento", nullable = false)
+    private String categoriaRecebimento = "STANDARD";
+
     @OneToMany(mappedBy = "entrada", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<EntradaMes> meses = new ArrayList<>();
 
@@ -45,6 +51,8 @@ public class Entrada {
     public BigDecimal getValor() { return valor; }
     public BigDecimal getTaxaImposto() { return taxaImposto; }
     public Integer getOrdem() { return ordem; }
+    public Boolean getValorLiquido() { return valorLiquido; }
+    public String getCategoriaRecebimento() { return categoriaRecebimento; }
     public List<EntradaMes> getMeses() { return meses; }
     public String getUserEmail() { return userEmail; }
 
@@ -53,6 +61,8 @@ public class Entrada {
     public void setValor(BigDecimal valor) { this.valor = valor; }
     public void setTaxaImposto(BigDecimal taxaImposto) { this.taxaImposto = taxaImposto; }
     public void setOrdem(Integer ordem) { this.ordem = ordem; }
+    public void setValorLiquido(Boolean valorLiquido) { this.valorLiquido = valorLiquido; }
+    public void setCategoriaRecebimento(String categoriaRecebimento) { this.categoriaRecebimento = categoriaRecebimento; }
     public void setMeses(List<EntradaMes> meses) { this.meses = meses; }
     public void setUserEmail(String userEmail) { this.userEmail = userEmail; }
 

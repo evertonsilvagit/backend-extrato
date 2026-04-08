@@ -8,6 +8,7 @@ param(
     [string]$VapidSubject = "mailto:dev@extrato.local",
     [string]$VapidPublicKey = "",
     [string]$VapidPrivateKey = "",
+    [string]$MongoUri = "mongodb://localhost:27017/extrato_learning",
     [string]$OtelEndpoint = "http://localhost:4318",
     [string]$OtelEnvironment = "local",
     [switch]$EnableOtel
@@ -80,12 +81,14 @@ $JwtSecret = Resolve-Setting -ParameterName "JwtSecret" -EnvKey "AUTH_JWT_SECRET
 $VapidSubject = Resolve-Setting -ParameterName "VapidSubject" -EnvKey "PUSH_VAPID_SUBJECT" -Fallback $VapidSubject
 $VapidPublicKey = Resolve-Setting -ParameterName "VapidPublicKey" -EnvKey "PUSH_VAPID_PUBLIC_KEY" -Fallback $VapidPublicKey
 $VapidPrivateKey = Resolve-Setting -ParameterName "VapidPrivateKey" -EnvKey "PUSH_VAPID_PRIVATE_KEY" -Fallback $VapidPrivateKey
+$MongoUri = Resolve-Setting -ParameterName "MongoUri" -EnvKey "SPRING_DATA_MONGODB_URI" -Fallback $MongoUri
 $OtelEndpoint = Resolve-Setting -ParameterName "OtelEndpoint" -EnvKey "OTEL_EXPORTER_OTLP_ENDPOINT" -Fallback $OtelEndpoint
 $OtelEnvironment = Resolve-Setting -ParameterName "OtelEnvironment" -EnvKey "OTEL_DEPLOYMENT_ENV" -Fallback $OtelEnvironment
 
 $env:SPRING_DATASOURCE_URL = "jdbc:postgresql://${DbHost}:${DbPort}/${DbName}"
 $env:SPRING_DATASOURCE_USERNAME = $DbUser
 $env:SPRING_DATASOURCE_PASSWORD = $DbPassword
+$env:SPRING_DATA_MONGODB_URI = $MongoUri
 $env:AUTH_JWT_SECRET = $JwtSecret
 $env:PUSH_VAPID_SUBJECT = $VapidSubject
 $env:PUSH_VAPID_PUBLIC_KEY = $VapidPublicKey
@@ -112,6 +115,7 @@ else {
 Write-Host "Starting backend-extrato on http://localhost:8083" -ForegroundColor Cyan
 Write-Host "Database: $($env:SPRING_DATASOURCE_URL)" -ForegroundColor DarkGray
 Write-Host "Database user: $($env:SPRING_DATASOURCE_USERNAME)" -ForegroundColor DarkGray
+Write-Host "MongoDB: $($env:SPRING_DATA_MONGODB_URI)" -ForegroundColor DarkGray
 Write-Host "Dotenv file: $dotenvPath" -ForegroundColor DarkGray
 Write-Host "OpenTelemetry endpoint: $($env:OTEL_EXPORTER_OTLP_ENDPOINT)" -ForegroundColor DarkGray
 Write-Host "OpenTelemetry exporters: traces=$($env:OTEL_TRACES_EXPORTER), metrics=$($env:OTEL_METRICS_EXPORTER), logs=$($env:OTEL_LOGS_EXPORTER)" -ForegroundColor DarkGray

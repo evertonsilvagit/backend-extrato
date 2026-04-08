@@ -98,6 +98,8 @@ public class EntradaController {
                     request.valor(),
                     request.taxaImposto(),
                     request.diasRecebimento(),
+                    request.valorLiquido(),
+                    request.categoriaRecebimento(),
                     request.mesesVigencia(),
                     request.ordem()
             );

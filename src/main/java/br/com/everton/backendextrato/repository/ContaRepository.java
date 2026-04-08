@@ -10,6 +10,7 @@ import java.util.Optional;
 @Repository
 public interface ContaRepository extends JpaRepository<Conta, Long> {
     List<Conta> findAllByUserEmailIgnoreCaseOrderByOrdemAscDescricaoAscIdAsc(String userEmail);
+    List<Conta> findAllByUserEmailIgnoreCaseAndCategoria_IdOrderByOrdemAscIdAsc(String userEmail, Long categoriaId);
     Optional<Conta> findByIdAndUserEmailIgnoreCase(Long id, String userEmail);
     Optional<Conta> findTopByUserEmailIgnoreCaseOrderByOrdemDescIdDesc(String userEmail);
     boolean existsByIdAndUserEmailIgnoreCase(Long id, String userEmail);
