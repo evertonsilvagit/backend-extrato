@@ -15,9 +15,11 @@ import java.util.Map;
 public class InvoiceRecordService {
 
     private final InvoiceRecordRepository repository;
+    private final MongoImportHistoryService importHistoryService;
 
-    public InvoiceRecordService(InvoiceRecordRepository repository) {
+    public InvoiceRecordService(InvoiceRecordRepository repository, MongoImportHistoryService importHistoryService) {
         this.repository = repository;
+        this.importHistoryService = importHistoryService;
     }
 
     @Transactional(readOnly = true)
@@ -34,6 +36,7 @@ public class InvoiceRecordService {
             throw new IllegalArgumentException("Informe ao menos uma nota fiscal para importação.");
         }
 
+        long start = System.nanoTime();
         int created = 0;
         int updated = 0;
         Map<String, InvoiceRecord> recordsBySourcePath = new HashMap<>();
@@ -75,7 +78,22 @@ public class InvoiceRecordService {
             else updated++;
         }
 
-        return new InvoiceImportResponse(created, updated, created + updated);
+        InvoiceImportResponse response = new InvoiceImportResponse(created, updated, created + updated);
+
+        long durationMs = (System.nanoTime() - start) / 1_000_000L;
+        importHistoryService.record(
+                userEmail,
+                "invoice-records",
+                "invoice-records",
+                records.size(),
+                created,
+                updated,
+                Math.max(0, records.size() - (created + updated)),
+                durationMs,
+                Map.of("payloadCount", records.size())
+        );
+
+        return response;
     }
 
     private InvoiceRecordDto toDto(InvoiceRecord record) {

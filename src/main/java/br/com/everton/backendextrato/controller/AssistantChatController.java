@@ -2,10 +2,12 @@ package br.com.everton.backendextrato.controller;
 
 import br.com.everton.backendextrato.auth.AuthenticatedUser;
 import br.com.everton.backendextrato.auth.AuthenticatedUserResolver;
+import br.com.everton.backendextrato.application.assistantchat.port.in.ReplyAssistantChatUseCase;
+import br.com.everton.backendextrato.domain.assistantchat.AssistantReply;
 import br.com.everton.backendextrato.dto.AssistantChatRequest;
+import br.com.everton.backendextrato.dto.AssistantChatResponse;
 import br.com.everton.backendextrato.dto.NotificationErrorResponse;
 import br.com.everton.backendextrato.service.AccessControlService;
-import br.com.everton.backendextrato.service.AssistantChatService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,16 +16,16 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/chat")
 public class AssistantChatController {
 
-    private final AssistantChatService assistantChatService;
+    private final ReplyAssistantChatUseCase replyAssistantChatUseCase;
     private final AuthenticatedUserResolver authenticatedUserResolver;
     private final AccessControlService accessControlService;
 
     public AssistantChatController(
-            AssistantChatService assistantChatService,
+            ReplyAssistantChatUseCase replyAssistantChatUseCase,
             AuthenticatedUserResolver authenticatedUserResolver,
             AccessControlService accessControlService
     ) {
-        this.assistantChatService = assistantChatService;
+        this.replyAssistantChatUseCase = replyAssistantChatUseCase;
         this.authenticatedUserResolver = authenticatedUserResolver;
         this.accessControlService = accessControlService;
     }
@@ -37,9 +39,12 @@ public class AssistantChatController {
         try {
             AuthenticatedUser user = authenticatedUserResolver.require(httpServletRequest);
             String effectiveOwnerEmail = accessControlService.resolveReadableOwner(user.email(), ownerEmail);
-            return ResponseEntity.ok(
-                    assistantChatService.reply(user.name(), effectiveOwnerEmail, request.messages())
+            AssistantReply reply = replyAssistantChatUseCase.execute(
+                    user.name(),
+                    effectiveOwnerEmail,
+                    request == null ? null : request.messages()
             );
+            return ResponseEntity.ok(new AssistantChatResponse(reply.answer(), reply.suggestions(), reply.mode()));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(new NotificationErrorResponse(ex.getMessage()));
         }

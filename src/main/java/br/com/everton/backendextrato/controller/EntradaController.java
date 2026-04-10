@@ -2,33 +2,46 @@ package br.com.everton.backendextrato.controller;
 
 import br.com.everton.backendextrato.auth.AuthenticatedUser;
 import br.com.everton.backendextrato.auth.AuthenticatedUserResolver;
+import br.com.everton.backendextrato.application.entrada.port.in.DeleteIncomeEntryUseCase;
+import br.com.everton.backendextrato.application.entrada.port.in.GetIncomeEntryUseCase;
+import br.com.everton.backendextrato.application.entrada.port.in.ListIncomeEntriesUseCase;
+import br.com.everton.backendextrato.application.entrada.port.in.SaveIncomeEntryUseCase;
+import br.com.everton.backendextrato.application.entrada.usecase.command.SaveIncomeEntryCommand;
+import br.com.everton.backendextrato.domain.entrada.IncomeEntry;
 import br.com.everton.backendextrato.dto.CreateEntradaRequest;
 import br.com.everton.backendextrato.dto.EntradaDto;
 import br.com.everton.backendextrato.dto.NotificationErrorResponse;
 import br.com.everton.backendextrato.service.AccessControlService;
-import br.com.everton.backendextrato.service.EntradaService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/entradas")
 public class EntradaController {
 
-    private final EntradaService service;
+    private final SaveIncomeEntryUseCase saveIncomeEntryUseCase;
+    private final GetIncomeEntryUseCase getIncomeEntryUseCase;
+    private final ListIncomeEntriesUseCase listIncomeEntriesUseCase;
+    private final DeleteIncomeEntryUseCase deleteIncomeEntryUseCase;
     private final AuthenticatedUserResolver authenticatedUserResolver;
     private final AccessControlService accessControlService;
 
     public EntradaController(
-            EntradaService service,
+            SaveIncomeEntryUseCase saveIncomeEntryUseCase,
+            GetIncomeEntryUseCase getIncomeEntryUseCase,
+            ListIncomeEntriesUseCase listIncomeEntriesUseCase,
+            DeleteIncomeEntryUseCase deleteIncomeEntryUseCase,
             AuthenticatedUserResolver authenticatedUserResolver,
             AccessControlService accessControlService
     ) {
-        this.service = service;
+        this.saveIncomeEntryUseCase = saveIncomeEntryUseCase;
+        this.getIncomeEntryUseCase = getIncomeEntryUseCase;
+        this.listIncomeEntriesUseCase = listIncomeEntriesUseCase;
+        this.deleteIncomeEntryUseCase = deleteIncomeEntryUseCase;
         this.authenticatedUserResolver = authenticatedUserResolver;
         this.accessControlService = accessControlService;
     }
@@ -42,8 +55,9 @@ public class EntradaController {
         try {
             AuthenticatedUser user = authenticatedUserResolver.require(httpServletRequest);
             String effectiveOwnerEmail = accessControlService.resolveWritableOwner(user.email(), ownerEmail);
-            EntradaDto criado = service.criar(effectiveOwnerEmail, request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(criado);
+            return ResponseEntity.status(HttpStatus.CREATED).body(
+                    toDto(saveIncomeEntryUseCase.execute(toCommand(request, effectiveOwnerEmail)))
+            );
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new NotificationErrorResponse(ex.getMessage()));
         }
@@ -58,8 +72,10 @@ public class EntradaController {
         try {
             AuthenticatedUser user = authenticatedUserResolver.require(httpServletRequest);
             String effectiveOwnerEmail = accessControlService.resolveReadableOwner(user.email(), ownerEmail);
-            Optional<EntradaDto> dto = service.buscarPorId(effectiveOwnerEmail, id);
-            return dto.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+            return getIncomeEntryUseCase.execute(effectiveOwnerEmail, id)
+                    .map(this::toDto)
+                    .map(ResponseEntity::ok)
+                    .orElseGet(() -> ResponseEntity.notFound().build());
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new NotificationErrorResponse(ex.getMessage()));
         }
@@ -75,7 +91,9 @@ public class EntradaController {
         try {
             AuthenticatedUser user = authenticatedUserResolver.require(httpServletRequest);
             String effectiveOwnerEmail = accessControlService.resolveReadableOwner(user.email(), ownerEmail);
-            return ResponseEntity.ok(service.listar(effectiveOwnerEmail, page, size));
+            return ResponseEntity.ok(listIncomeEntriesUseCase.execute(effectiveOwnerEmail, page, size).stream()
+                    .map(this::toDto)
+                    .toList());
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -103,8 +121,7 @@ public class EntradaController {
                     request.mesesVigencia(),
                     request.ordem()
             );
-            EntradaDto atualizado = service.criar(effectiveOwnerEmail, payload);
-            return ResponseEntity.ok(atualizado);
+            return ResponseEntity.ok(toDto(saveIncomeEntryUseCase.execute(toCommand(payload, effectiveOwnerEmail))));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new NotificationErrorResponse(ex.getMessage()));
         }
@@ -119,10 +136,41 @@ public class EntradaController {
         try {
             AuthenticatedUser user = authenticatedUserResolver.require(httpServletRequest);
             String effectiveOwnerEmail = accessControlService.resolveWritableOwner(user.email(), ownerEmail);
-            boolean removed = service.remover(effectiveOwnerEmail, id);
+            boolean removed = deleteIncomeEntryUseCase.execute(effectiveOwnerEmail, id);
             return removed ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new NotificationErrorResponse(ex.getMessage()));
         }
+    }
+
+    private SaveIncomeEntryCommand toCommand(CreateEntradaRequest request, String ownerEmail) {
+        return new SaveIncomeEntryCommand(
+                request.id(),
+                request.nome(),
+                request.tipo(),
+                request.valor(),
+                request.taxaImposto(),
+                request.diasRecebimento(),
+                request.valorLiquido(),
+                request.categoriaRecebimento(),
+                request.mesesVigencia(),
+                request.ordem(),
+                ownerEmail
+        );
+    }
+
+    private EntradaDto toDto(IncomeEntry incomeEntry) {
+        return new EntradaDto(
+                incomeEntry.id(),
+                incomeEntry.name(),
+                incomeEntry.type(),
+                incomeEntry.amount(),
+                incomeEntry.taxRate(),
+                incomeEntry.paymentDays(),
+                incomeEntry.netAmount(),
+                incomeEntry.incomeCategory(),
+                incomeEntry.activeMonths(),
+                incomeEntry.sortOrder()
+        );
     }
 }

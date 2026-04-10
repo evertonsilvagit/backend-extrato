@@ -61,3 +61,48 @@ Nao e um bom primeiro alvo neste projeto:
 - `Divida`
 - `Entrada`
 - entidades com forte relacionamento entre si
+
+## Endpoints reais no app
+
+### Auditoria
+
+Base path:
+
+```text
+/api/mongo-audit/events
+```
+
+Criar evento manual (opcional):
+
+```json
+{
+  "action": "invoice-import",
+  "resource": "invoice-records",
+  "source": "api",
+  "payload": {
+    "created": 2,
+    "updated": 1,
+    "total": 3
+  }
+}
+```
+
+### Historico de importacoes
+
+Base path:
+
+```text
+/api/mongo-imports/invoices
+```
+
+Esse log e alimentado automaticamente ao importar notas fiscais.
+
+### Logs de notificacoes
+
+Base path:
+
+```text
+/api/mongo-notifications/logs
+```
+
+Esse log e alimentado automaticamente ao enviar notificacoes (teste ou reais).

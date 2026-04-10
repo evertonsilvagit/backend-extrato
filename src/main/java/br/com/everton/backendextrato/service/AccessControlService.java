@@ -4,10 +4,13 @@ import br.com.everton.backendextrato.dto.AccessManagementResponse;
 import br.com.everton.backendextrato.dto.AccessibleOwnerResponse;
 import br.com.everton.backendextrato.dto.ShareAccessRequest;
 import br.com.everton.backendextrato.dto.SharedViewerResponse;
+import br.com.everton.backendextrato.config.CacheNames;
 import br.com.everton.backendextrato.model.UserAccount;
 import br.com.everton.backendextrato.model.UserDataAccess;
 import br.com.everton.backendextrato.repository.UserAccountRepository;
 import br.com.everton.backendextrato.repository.UserDataAccessRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +34,7 @@ public class AccessControlService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = CacheNames.ACCESS_MANAGEMENT, key = "#currentUserEmail")
     public AccessManagementResponse getManagementData(String currentUserEmail) {
         String normalizedEmail = normalizeEmail(currentUserEmail);
 
@@ -57,6 +61,7 @@ public class AccessControlService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = CacheNames.ACCESS_MANAGEMENT, allEntries = true)
     public SharedViewerResponse grantAccess(String ownerEmail, ShareAccessRequest request) {
         if (request == null || request.viewerEmail() == null || request.viewerEmail().isBlank()) {
             throw new IllegalArgumentException("Informe o email do usuário que receberá acesso.");
@@ -84,6 +89,7 @@ public class AccessControlService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = CacheNames.ACCESS_MANAGEMENT, allEntries = true)
     public void revokeAccess(String ownerEmail, Long accessId) {
         UserDataAccess access = userDataAccessRepository.findByIdAndOwnerEmailIgnoreCase(accessId, normalizeEmail(ownerEmail))
                 .orElseThrow(() -> new IllegalArgumentException("Compartilhamento não encontrado."));

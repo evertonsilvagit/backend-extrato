@@ -37,5 +37,17 @@ out/
 .vscode/
 .env.local
 .tmp/
+infra/terraform/.terraform/
+infra/terraform/.terraform.lock.hcl
+infra/terraform/*.tfstate
+infra/terraform/*.tfstate.*
+infra/terraform/*.tfvars
+infra/terraform/*.tfplan
+infra/terraform/backend.tf
+infra/terraform/bootstrap/.terraform/
+infra/terraform/bootstrap/.terraform.lock.hcl
+infra/terraform/bootstrap/*.tfstate
+infra/terraform/bootstrap/*.tfstate.*
+infra/terraform/bootstrap/*.tfvars
 
 nul

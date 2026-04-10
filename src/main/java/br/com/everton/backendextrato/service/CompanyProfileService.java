@@ -1,8 +1,11 @@
 package br.com.everton.backendextrato.service;
 
 import br.com.everton.backendextrato.dto.CompanyProfileDto;
+import br.com.everton.backendextrato.config.CacheNames;
 import br.com.everton.backendextrato.model.CompanyProfile;
 import br.com.everton.backendextrato.repository.CompanyProfileRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,11 +21,13 @@ public class CompanyProfileService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = CacheNames.COMPANY_PROFILE, key = "#userEmail", unless = "#result == null")
     public Optional<CompanyProfileDto> getByUserEmail(String userEmail) {
         return repository.findByUserEmailIgnoreCase(userEmail).map(this::toDto);
     }
 
     @Transactional
+    @CacheEvict(cacheNames = CacheNames.COMPANY_PROFILE, key = "#userEmail")
     public CompanyProfileDto save(String userEmail, CompanyProfileDto request) {
         if (request == null) {
             throw new IllegalArgumentException("Dados da empresa são obrigatórios.");

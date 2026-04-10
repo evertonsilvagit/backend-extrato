@@ -2,31 +2,43 @@ package br.com.everton.backendextrato.controller;
 
 import br.com.everton.backendextrato.auth.AuthenticatedUser;
 import br.com.everton.backendextrato.auth.AuthenticatedUserResolver;
+import br.com.everton.backendextrato.application.conta.port.in.DeleteAccountBillUseCase;
+import br.com.everton.backendextrato.application.conta.port.in.GetAccountBillUseCase;
+import br.com.everton.backendextrato.application.conta.port.in.ListAccountBillsUseCase;
+import br.com.everton.backendextrato.application.conta.port.in.SaveAccountBillUseCase;
+import br.com.everton.backendextrato.application.conta.usecase.command.SaveAccountBillCommand;
+import br.com.everton.backendextrato.domain.conta.AccountBill;
 import br.com.everton.backendextrato.dto.ContaDto;
 import br.com.everton.backendextrato.dto.NotificationErrorResponse;
 import br.com.everton.backendextrato.service.AccessControlService;
-import br.com.everton.backendextrato.service.ContaService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/contas")
 public class ContaController {
 
-    private final ContaService service;
+    private final SaveAccountBillUseCase saveAccountBillUseCase;
+    private final ListAccountBillsUseCase listAccountBillsUseCase;
+    private final GetAccountBillUseCase getAccountBillUseCase;
+    private final DeleteAccountBillUseCase deleteAccountBillUseCase;
     private final AuthenticatedUserResolver authenticatedUserResolver;
     private final AccessControlService accessControlService;
 
     public ContaController(
-            ContaService service,
+            SaveAccountBillUseCase saveAccountBillUseCase,
+            ListAccountBillsUseCase listAccountBillsUseCase,
+            GetAccountBillUseCase getAccountBillUseCase,
+            DeleteAccountBillUseCase deleteAccountBillUseCase,
             AuthenticatedUserResolver authenticatedUserResolver,
             AccessControlService accessControlService
     ) {
-        this.service = service;
+        this.saveAccountBillUseCase = saveAccountBillUseCase;
+        this.listAccountBillsUseCase = listAccountBillsUseCase;
+        this.getAccountBillUseCase = getAccountBillUseCase;
+        this.deleteAccountBillUseCase = deleteAccountBillUseCase;
         this.authenticatedUserResolver = authenticatedUserResolver;
         this.accessControlService = accessControlService;
     }
@@ -40,8 +52,8 @@ public class ContaController {
         try {
             AuthenticatedUser user = authenticatedUserResolver.require(httpServletRequest);
             String effectiveOwnerEmail = accessControlService.resolveWritableOwner(user.email(), ownerEmail);
-            ContaDto criado = service.criar(effectiveOwnerEmail, request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(criado);
+            AccountBill created = saveAccountBillUseCase.execute(toCommand(request, effectiveOwnerEmail));
+            return ResponseEntity.status(HttpStatus.CREATED).body(toDto(created));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new NotificationErrorResponse(ex.getMessage()));
         }
@@ -55,7 +67,9 @@ public class ContaController {
         try {
             AuthenticatedUser user = authenticatedUserResolver.require(httpServletRequest);
             String effectiveOwnerEmail = accessControlService.resolveReadableOwner(user.email(), ownerEmail);
-            return ResponseEntity.ok(service.listar(effectiveOwnerEmail));
+            return ResponseEntity.ok(listAccountBillsUseCase.execute(effectiveOwnerEmail).stream()
+                    .map(this::toDto)
+                    .toList());
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new NotificationErrorResponse(ex.getMessage()));
         }
@@ -70,7 +84,8 @@ public class ContaController {
         try {
             AuthenticatedUser user = authenticatedUserResolver.require(httpServletRequest);
             String effectiveOwnerEmail = accessControlService.resolveReadableOwner(user.email(), ownerEmail);
-            return service.buscarPorId(effectiveOwnerEmail, id)
+            return getAccountBillUseCase.execute(effectiveOwnerEmail, id)
+                    .map(this::toDto)
                     .map(ResponseEntity::ok)
                     .orElseGet(() -> ResponseEntity.notFound().build());
         } catch (IllegalArgumentException ex) {
@@ -97,8 +112,8 @@ public class ContaController {
                     request.mesesVigencia(),
                     request.ordem()
             );
-            ContaDto atualizado = service.criar(effectiveOwnerEmail, payload);
-            return ResponseEntity.ok(atualizado);
+            AccountBill updated = saveAccountBillUseCase.execute(toCommand(payload, effectiveOwnerEmail));
+            return ResponseEntity.ok(toDto(updated));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new NotificationErrorResponse(ex.getMessage()));
         }
@@ -113,10 +128,35 @@ public class ContaController {
         try {
             AuthenticatedUser user = authenticatedUserResolver.require(httpServletRequest);
             String effectiveOwnerEmail = accessControlService.resolveWritableOwner(user.email(), ownerEmail);
-            boolean removed = service.remover(effectiveOwnerEmail, id);
+            boolean removed = deleteAccountBillUseCase.execute(effectiveOwnerEmail, id);
             return removed ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new NotificationErrorResponse(ex.getMessage()));
         }
+    }
+
+    private SaveAccountBillCommand toCommand(ContaDto dto, String ownerEmail) {
+        return new SaveAccountBillCommand(
+                dto.id(),
+                dto.descricao(),
+                dto.valor(),
+                dto.diaPagamento(),
+                dto.categoria(),
+                dto.mesesVigencia(),
+                dto.ordem(),
+                ownerEmail
+        );
+    }
+
+    private ContaDto toDto(AccountBill bill) {
+        return new ContaDto(
+                bill.id(),
+                bill.description(),
+                bill.amount(),
+                bill.paymentDay(),
+                bill.categoryName(),
+                bill.activeMonths(),
+                bill.sortOrder()
+        );
     }
 }

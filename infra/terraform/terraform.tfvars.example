@@ -1,0 +1,30 @@
+artifact_bucket_name   = "codepipeline-us-east-1-2774085a38ec-4907-8ff0-b3107b30079b"
+codestar_connection_arn = "arn:aws:codeconnections:us-east-1:116671358684:connection/7ef24588-8889-4b73-963c-493fb0b24b18"
+
+vpc_id = "vpc-05c1fd7146a429cff"
+public_subnet_ids = [
+  "subnet-03d8ae68618b44692",
+  "subnet-0c8427ffa3d9c42ec",
+  "subnet-033fe9c2009ac9f3f",
+  "subnet-03c222a01fd95ab8a",
+  "subnet-099793d223180db1a",
+  "subnet-0d2c4230d06678283",
+]
+
+certificate_arn = "arn:aws:acm:us-east-1:116671358684:certificate/a69743b2-41b3-41f8-af99-77719c0279a3"
+host_header     = "ba-eb7390d44ddd485d8fe29ae997d709a9.ecs.us-east-1.on.aws"
+
+manage_ecs_service                = false
+service_desired_count             = 1
+health_check_grace_period_seconds = 0
+
+container_environment = {
+  AUTH_JWT_SECRET          = "replace-me"
+  PUSH_VAPID_PRIVATE_KEY   = "replace-me"
+  PUSH_VAPID_PUBLIC_KEY    = "replace-me"
+  PUSH_VAPID_SUBJECT       = "mailto:replace-me@example.com"
+  SPRING_DATASOURCE_PASSWORD = "replace-me"
+  SPRING_DATASOURCE_URL      = "jdbc:postgresql://example"
+  SPRING_DATASOURCE_USERNAME = "replace-me"
+  SPRING_FLYWAY_ENABLED      = "true"
+}

@@ -2,31 +2,39 @@ package br.com.everton.backendextrato.controller;
 
 import br.com.everton.backendextrato.auth.AuthenticatedUser;
 import br.com.everton.backendextrato.auth.AuthenticatedUserResolver;
+import br.com.everton.backendextrato.application.divida.port.in.DeleteDebtUseCase;
+import br.com.everton.backendextrato.application.divida.port.in.ListDebtsUseCase;
+import br.com.everton.backendextrato.application.divida.port.in.SaveDebtUseCase;
+import br.com.everton.backendextrato.application.divida.usecase.command.SaveDebtCommand;
+import br.com.everton.backendextrato.domain.divida.Debt;
 import br.com.everton.backendextrato.dto.DividaDto;
 import br.com.everton.backendextrato.dto.NotificationErrorResponse;
 import br.com.everton.backendextrato.service.AccessControlService;
-import br.com.everton.backendextrato.service.DividaService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/dividas")
 public class DividaController {
 
-    private final DividaService service;
+    private final ListDebtsUseCase listDebtsUseCase;
+    private final SaveDebtUseCase saveDebtUseCase;
+    private final DeleteDebtUseCase deleteDebtUseCase;
     private final AuthenticatedUserResolver authenticatedUserResolver;
     private final AccessControlService accessControlService;
 
     public DividaController(
-            DividaService service,
+            ListDebtsUseCase listDebtsUseCase,
+            SaveDebtUseCase saveDebtUseCase,
+            DeleteDebtUseCase deleteDebtUseCase,
             AuthenticatedUserResolver authenticatedUserResolver,
             AccessControlService accessControlService
     ) {
-        this.service = service;
+        this.listDebtsUseCase = listDebtsUseCase;
+        this.saveDebtUseCase = saveDebtUseCase;
+        this.deleteDebtUseCase = deleteDebtUseCase;
         this.authenticatedUserResolver = authenticatedUserResolver;
         this.accessControlService = accessControlService;
     }
@@ -39,7 +47,7 @@ public class DividaController {
         try {
             AuthenticatedUser user = authenticatedUserResolver.require(httpServletRequest);
             String effectiveOwnerEmail = accessControlService.resolveReadableOwner(user.email(), ownerEmail);
-            return ResponseEntity.ok(service.listar(effectiveOwnerEmail));
+            return ResponseEntity.ok(listDebtsUseCase.execute(effectiveOwnerEmail).stream().map(this::toDto).toList());
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new NotificationErrorResponse(ex.getMessage()));
         }
@@ -54,7 +62,9 @@ public class DividaController {
         try {
             AuthenticatedUser user = authenticatedUserResolver.require(httpServletRequest);
             String effectiveOwnerEmail = accessControlService.resolveWritableOwner(user.email(), ownerEmail);
-            return ResponseEntity.status(HttpStatus.CREATED).body(service.salvar(effectiveOwnerEmail, dto));
+            return ResponseEntity.status(HttpStatus.CREATED).body(
+                    toDto(saveDebtUseCase.execute(toCommand(dto, effectiveOwnerEmail)))
+            );
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new NotificationErrorResponse(e.getMessage()));
         }
@@ -77,7 +87,7 @@ public class DividaController {
                     dto.categoria(),
                     dto.ordem()
             );
-            return ResponseEntity.ok(service.salvar(effectiveOwnerEmail, payload));
+            return ResponseEntity.ok(toDto(saveDebtUseCase.execute(toCommand(payload, effectiveOwnerEmail))));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new NotificationErrorResponse(e.getMessage()));
         }
@@ -92,9 +102,17 @@ public class DividaController {
         try {
             AuthenticatedUser user = authenticatedUserResolver.require(httpServletRequest);
             String effectiveOwnerEmail = accessControlService.resolveWritableOwner(user.email(), ownerEmail);
-            return service.remover(effectiveOwnerEmail, id) ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+            return deleteDebtUseCase.execute(effectiveOwnerEmail, id) ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new NotificationErrorResponse(e.getMessage()));
         }
+    }
+
+    private SaveDebtCommand toCommand(DividaDto dto, String ownerEmail) {
+        return new SaveDebtCommand(dto.id(), dto.descricao(), dto.valor(), dto.categoria(), dto.ordem(), ownerEmail);
+    }
+
+    private DividaDto toDto(Debt debt) {
+        return new DividaDto(debt.id(), debt.description(), debt.amount(), debt.categoryName(), debt.sortOrder());
     }
 }

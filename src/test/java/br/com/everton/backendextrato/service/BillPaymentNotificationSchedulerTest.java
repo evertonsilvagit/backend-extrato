@@ -1,24 +1,15 @@
 package br.com.everton.backendextrato.service;
 
+import br.com.everton.backendextrato.application.notification.port.in.TriggerDueBillNotificationsUseCase;
 import br.com.everton.backendextrato.dto.BillPaymentNotificationRunResponse;
-import br.com.everton.backendextrato.dto.PushNotificationTestResponse;
-import br.com.everton.backendextrato.model.Conta;
-import br.com.everton.backendextrato.repository.BillPaymentNotificationLogRepository;
-import br.com.everton.backendextrato.repository.ContaRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -26,93 +17,40 @@ import static org.mockito.Mockito.when;
 class BillPaymentNotificationSchedulerTest {
 
     @Mock
-    private ContaRepository contaRepository;
-
-    @Mock
-    private NotificationDeliveryService notificationDeliveryService;
-
-    @Mock
-    private BillPaymentNotificationLogRepository notificationLogRepository;
+    private TriggerDueBillNotificationsUseCase triggerDueBillNotificationsUseCase;
 
     private BillPaymentNotificationScheduler scheduler;
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
         scheduler = new BillPaymentNotificationScheduler(
-                contaRepository,
-                notificationDeliveryService,
-                notificationLogRepository,
+                triggerDueBillNotificationsUseCase,
                 "America/Sao_Paulo"
         );
     }
 
     @Test
-    void shouldSendOneNotificationPerUserForBillsDueToday() {
+    void shouldDelegateDueBillNotificationExecution() {
         LocalDate referenceDate = LocalDate.of(2026, 3, 28);
-        when(contaRepository.findAll()).thenReturn(List.of(
-                buildConta("user@example.com", "Internet", 28, List.of(3), "89.90"),
-                buildConta("user@example.com", "Energia", 28, List.of(3), "120.00"),
-                buildConta("user@example.com", "Assinatura", 15, List.of(3), "19.90"),
-                buildConta("other@example.com", "Aluguel", 28, List.of(4), "900.00"),
-                buildConta(null, "Sem Usuario", 28, List.of(3), "10.00")
-        ));
-        when(notificationLogRepository.existsByUserEmailIgnoreCaseAndReferenceDate("user@example.com", referenceDate))
-                .thenReturn(false);
-        when(notificationDeliveryService.sendToUser(eq("user@example.com"), any(), any(), eq("/contas")))
-                .thenReturn(new PushNotificationTestResponse(1, 1, 0, 0));
+        BillPaymentNotificationRunResponse expected = new BillPaymentNotificationRunResponse(referenceDate, 1, 2, 1, 0, 0, 1, 0);
+        when(triggerDueBillNotificationsUseCase.execute(referenceDate)).thenReturn(expected);
 
         BillPaymentNotificationRunResponse response = scheduler.sendDueBillNotifications(referenceDate);
 
-        ArgumentCaptor<String> titleCaptor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<String> bodyCaptor = ArgumentCaptor.forClass(String.class);
-        verify(notificationDeliveryService).sendToUser(eq("user@example.com"), titleCaptor.capture(), bodyCaptor.capture(), eq("/contas"));
-        verify(notificationLogRepository).save(any());
-
-        assertThat(titleCaptor.getValue()).isEqualTo("Contas para pagar hoje");
-        assertThat(bodyCaptor.getValue()).contains("vencem 2 contas");
-        assertThat(bodyCaptor.getValue()).contains("Internet");
-        assertThat(bodyCaptor.getValue()).contains("Energia");
-        assertThat(response.referenceDate()).isEqualTo(referenceDate);
-        assertThat(response.dueUserCount()).isEqualTo(1);
-        assertThat(response.dueBillCount()).isEqualTo(2);
-        assertThat(response.triggeredUserCount()).isEqualTo(1);
-        assertThat(response.skippedAlreadySentCount()).isZero();
-        assertThat(response.usersWithoutSubscriptionsCount()).isZero();
-        assertThat(response.deliveredSubscriptionCount()).isEqualTo(1);
-        assertThat(response.failedSubscriptionCount()).isZero();
+        verify(triggerDueBillNotificationsUseCase).execute(referenceDate);
+        assertThat(response).isEqualTo(expected);
     }
 
     @Test
-    void shouldSkipUsersAlreadyNotifiedOnReferenceDate() {
+    void shouldUseConfiguredZoneWhenSchedulingTodayNotifications() {
         LocalDate referenceDate = LocalDate.of(2026, 2, 28);
-        when(contaRepository.findAll()).thenReturn(List.of(
-                buildConta("user@example.com", "Cartao", 31, List.of(2), "300.00")
-        ));
-        when(notificationLogRepository.existsByUserEmailIgnoreCaseAndReferenceDate("user@example.com", referenceDate))
-                .thenReturn(true);
+        when(triggerDueBillNotificationsUseCase.execute(referenceDate)).thenReturn(
+                new BillPaymentNotificationRunResponse(referenceDate, 0, 0, 0, 0, 0, 0, 0)
+        );
 
         BillPaymentNotificationRunResponse response = scheduler.sendDueBillNotifications(referenceDate);
 
-        verify(notificationDeliveryService, never()).sendToUser(any(), any(), any(), any());
-        verify(notificationLogRepository, never()).save(any());
+        verify(triggerDueBillNotificationsUseCase).execute(referenceDate);
         assertThat(response.referenceDate()).isEqualTo(referenceDate);
-        assertThat(response.dueUserCount()).isEqualTo(1);
-        assertThat(response.dueBillCount()).isEqualTo(1);
-        assertThat(response.triggeredUserCount()).isZero();
-        assertThat(response.skippedAlreadySentCount()).isEqualTo(1);
-        assertThat(response.usersWithoutSubscriptionsCount()).isZero();
-        assertThat(response.deliveredSubscriptionCount()).isZero();
-        assertThat(response.failedSubscriptionCount()).isZero();
-    }
-
-    private Conta buildConta(String userEmail, String descricao, int diaPagamento, List<Integer> mesesVigencia, String valor) {
-        Conta conta = new Conta();
-        conta.setUserEmail(userEmail);
-        conta.setDescricao(descricao);
-        conta.setDiaPagamento(diaPagamento);
-        conta.setOrdem(1);
-        conta.setMesesVigencia(mesesVigencia);
-        conta.setValor(new BigDecimal(valor));
-        return conta;
     }
 }

@@ -1,0 +1,3 @@
+state_bucket_name = "extrato-terraform-state-prod"
+lock_table_name   = "extrato-terraform-locks"
+

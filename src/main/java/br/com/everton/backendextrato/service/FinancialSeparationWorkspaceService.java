@@ -3,11 +3,14 @@ package br.com.everton.backendextrato.service;
 import br.com.everton.backendextrato.dto.FinancialSeparationCashboxDto;
 import br.com.everton.backendextrato.dto.FinancialSeparationEntryDto;
 import br.com.everton.backendextrato.dto.FinancialSeparationWorkspaceDto;
+import br.com.everton.backendextrato.config.CacheNames;
 import br.com.everton.backendextrato.model.FinancialSeparationWorkspace;
 import br.com.everton.backendextrato.repository.FinancialSeparationWorkspaceRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,11 +28,13 @@ public class FinancialSeparationWorkspaceService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = CacheNames.FINANCIAL_SEPARATION_WORKSPACE, key = "#userEmail", unless = "#result == null")
     public Optional<FinancialSeparationWorkspaceDto> getByUserEmail(String userEmail) {
         return repository.findByUserEmailIgnoreCase(userEmail).map(this::toDto);
     }
 
     @Transactional
+    @CacheEvict(cacheNames = CacheNames.FINANCIAL_SEPARATION_WORKSPACE, key = "#userEmail")
     public FinancialSeparationWorkspaceDto save(String userEmail, FinancialSeparationWorkspaceDto request) {
         if (request == null) {
             throw new IllegalArgumentException("Os dados da central PF / PJ s\u00e3o obrigat\u00f3rios.");
