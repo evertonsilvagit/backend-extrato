@@ -1,5 +1,11 @@
-*
-!Dockerfile
-!build/
-!build/libs/
-!build/libs/*.jar
+.git
+.gradle
+build
+bootrun.log
+bootrun.err.log
+.idea
+.tmp
+docs
+postman
+openspec
+services
