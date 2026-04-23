@@ -1,0 +1,47 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend-extrato
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://ep-falling-night-amcnqw6s-pooler.c-5.us-east-1.aws.neon.tech:5432/extrato?sslmode=require
+      SPRING_DATASOURCE_USERNAME: neondb_owner
+      SPRING_DATASOURCE_PASSWORD: npg_p2QZnBvSN8jI
+      SPRING_DATA_MONGODB_URI: mongodb://root:Ere_250893@mongodb:27017/extrato_learning?authSource=admin
+      AUTH_JWT_SECRET: 8f2c4917e3b5c6a9f1e2d4c7b8a3fe1d9c2b4a7f5e8c1d3a6b9e2f4c7a1d5
+      AUTH_JWT_ISSUER: backend-extrato
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4318
+      OTEL_METRICS_EXPORTER: none
+      OTEL_TRACES_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+    networks:
+      - extrato-network
+
+  mongodb:
+    image: mongo:7
+    container_name: extrato-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: Ere_250893
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - extrato-network
+
+volumes:
+  postgres-data:
+  mongodb-data:
+
+networks:
+  extrato-network:
+    driver: bridge
